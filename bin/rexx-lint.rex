@@ -18,6 +18,7 @@ exit main(argLine)
 ::requires 'Rexx.Parser.cls'
 ::requires 'Diagnostic.cls'
 ::requires 'ShadowedSpecialVars.cls'
+::requires 'KeywordAsVariable.cls'
 
 ::routine main
   use strict arg argLine
@@ -38,7 +39,7 @@ exit main(argLine)
      return 2
   end
 
-  checks = .Array~of(.ShadowedSpecialVars~new)
+  checks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new)
 
   totalFindings = 0
   do file over files

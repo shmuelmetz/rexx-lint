@@ -11,6 +11,7 @@ exit main(argLine)
 ::requires 'Rexx.Parser.cls'
 ::requires 'Diagnostic.cls'
 ::requires 'ShadowedSpecialVars.cls'
+::requires 'KeywordAsVariable.cls'
 
 ::routine main
   use strict arg argLine
@@ -18,8 +19,10 @@ exit main(argLine)
   here = filespec('location', .context~package~name)
 
   failures = 0
-  failures = failures + assertFindingCount(here'fixtures\shadowed-vars-bad.rex', 2)
-  failures = failures + assertFindingCount(here'fixtures\shadowed-vars-good.rex', 0)
+  failures = failures + assertFindingCount(here'fixtures\shadowed-vars-bad.rex', .ShadowedSpecialVars~new, 2)
+  failures = failures + assertFindingCount(here'fixtures\shadowed-vars-good.rex', .ShadowedSpecialVars~new, 0)
+  failures = failures + assertFindingCount(here'fixtures\keyword-as-variable-bad.rex', .KeywordAsVariable~new, 4)
+  failures = failures + assertFindingCount(here'fixtures\keyword-as-variable-good.rex', .KeywordAsVariable~new, 0)
 
   if failures == 0 then do
      say 'All tests passed.'
@@ -29,10 +32,9 @@ exit main(argLine)
   return 1
 
 ::routine assertFindingCount
-  use strict arg file, expectedCount
+  use strict arg file, check, expectedCount
 
   parser = .Rexx.Parser~new(file)
-  check = .ShadowedSpecialVars~new
   diagnostics = check~run(parser)
 
   if diagnostics~items == expectedCount then do
