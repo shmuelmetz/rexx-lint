@@ -4,9 +4,23 @@
  *   rexx rexx-lint.rex [options] file.rex [file2.rex ...]
  *
  * Options:
- *   --dialect=DIALECT   Target dialect (accepted, not yet used to vary
- *                       check behavior -- see README.md's "Dialect
- *                       support" section). Default: oorexx.
+ *   --dialect=DIALECT   Target dialect for every file given (accepted,
+ *                       not yet used to vary check behavior -- see
+ *                       README.md's "Dialect support" section).
+ *                       Without this flag, each file's OWN extproc or
+ *                       shebang line is consulted instead (see
+ *                       lib/ExtprocDialect.cls): a file that plainly
+ *                       routes to a non-Rexx interpreter (perl,
+ *                       python, a shell, ...) is reported and skipped
+ *                       before ever reaching the parser, the same way
+ *                       a genuine parse failure is; a file naming a
+ *                       recognized Rexx interpreter (regina, ...) or
+ *                       an unrecognized one that still looks
+ *                       Rexx-shaped by name gets that dialect; a file
+ *                       with no extproc/shebang line at all -- true
+ *                       of every genuine Rexx file in real-world
+ *                       testing -- falls back to today's oorexx
+ *                       default, same as before this existed.
  *   --checks=A,B,C      Run only these checks (by name), ignoring the
  *                       default full set.
  *   --disable=A,B,C     Run the default full set except these checks.
@@ -46,6 +60,7 @@ exit main(argLine)
 ::requires 'Rexx.Parser.cls'
 ::requires 'Diagnostic.cls'
 ::requires 'CheckSelector.cls'
+::requires 'ExtprocDialect.cls'
 ::requires 'ShadowedSpecialVars.cls'
 ::requires 'KeywordAsVariable.cls'
 ::requires 'SignalControlFlow.cls'
@@ -57,7 +72,8 @@ exit main(argLine)
 ::routine main
   use strict arg argLine
 
-  dialect = 'oorexx'
+  dialect = ''
+  dialectGiven = .False
   files = .Array~new
   onlyList = ''
   disableList = ''
@@ -66,8 +82,10 @@ exit main(argLine)
   args = argLine~space~makeArray(' ')
   do a over args
      select
-        when a~length > 10, a~substr(1, 10)~caselessEquals('--dialect=') then
+        when a~length > 10, a~substr(1, 10)~caselessEquals('--dialect=') then do
            dialect = a~substr(11)
+           dialectGiven = .True
+        end
         when a~length > 9, a~substr(1, 9)~caselessEquals('--checks=') then
            onlyList = a~substr(10)
         when a~length > 10, a~substr(1, 10)~caselessEquals('--disable=') then
@@ -94,7 +112,19 @@ exit main(argLine)
   totalFindings = 0
   parseFailures = 0
   do file over files
-     result = lintFile(file, dialect, checks)
+     fileDialect = dialect
+     if \dialectGiven then do
+        info = .ExtprocDialect~detect(file)
+        if info~at('ISNONREXX') then do
+           say file': not Rexx (' || info~at('SOURCE') || " routes to '" ,
+               || info~at('INTERPRETER') || "') -- skipped"
+           parseFailures = parseFailures + 1
+           iterate
+        end
+        fileDialect = info~at('DIALECT')
+        if fileDialect == '' then fileDialect = 'oorexx'
+     end
+     result = lintFile(file, fileDialect, checks)
      if result < 0 then parseFailures = parseFailures + 1
      else totalFindings = totalFindings + result
   end

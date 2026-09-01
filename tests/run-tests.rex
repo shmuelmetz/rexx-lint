@@ -11,6 +11,7 @@ exit main(argLine)
 ::requires 'Rexx.Parser.cls'
 ::requires 'Diagnostic.cls'
 ::requires 'CheckSelector.cls'
+::requires 'ExtprocDialect.cls'
 ::requires 'ShadowedSpecialVars.cls'
 ::requires 'KeywordAsVariable.cls'
 ::requires 'SignalControlFlow.cls'
@@ -76,6 +77,42 @@ exit main(argLine)
      'signal-control-flow', ,
      '--config=PATH selects the names listed in the file, skipping blanks/comments')
 
+  /* ExtprocDialect.cls unit tests -- written to small temp files
+   * under this fixtures directory (cleaned up after) since the class
+   * reads a file's own leading lines directly, not parser output.
+   * assertDetect(dir, fname, line1, line2, expectInterp, expectDialect,
+   * expectIsNonRexx, expectSource, label). Pass '' for line2 when the
+   * fixture is only one line long. */
+  extprocDir = here'fixtures\'
+  failures = failures + assertDetect(extprocDir, 'perl-extproc.tmp', ,
+     'extproc G:\emx\bin\perl -STw', '', ,
+     'G:\emx\bin\perl', '', .True, 'extproc', ,
+     'extproc perl -- known non-Rexx interpreter')
+  failures = failures + assertDetect(extprocDir, 'perl-shebang-env.tmp', ,
+     '#!/usr/bin/env perl', '', ,
+     'perl', '', .True, 'shebang', ,
+     '#!/usr/bin/env perl -- interpreter taken from after env')
+  failures = failures + assertDetect(extprocDir, 'regina.tmp', ,
+     'extproc regina', '', ,
+     'regina', 'regina', .False, 'extproc', ,
+     'extproc regina -- known Rexx dialect from the table')
+  failures = failures + assertDetect(extprocDir, 'oorexx-bare.tmp', ,
+     'extproc rexx', '', ,
+     'rexx', 'oorexx', .False, 'extproc', ,
+     'extproc rexx -- bare name not in the table, falls back to oorexx')
+  failures = failures + assertDetect(extprocDir, 'unknown-nonrexx.tmp', ,
+     'extproc frobnicate', '', ,
+     'frobnicate', '', .False, 'extproc', ,
+     'extproc frobnicate -- unrecognized, not rexx-shaped, left unknown')
+  failures = failures + assertDetect(extprocDir, 'unknown-rexxish.tmp', ,
+     'extproc myrexxvariant', '', ,
+     'myrexxvariant', 'oorexx', .False, 'extproc', ,
+     'extproc myrexxvariant -- unrecognized but rexx-shaped by name')
+  failures = failures + assertDetect(extprocDir, 'no-marker.tmp', ,
+     '/* just a comment */', 'say "hi"', ,
+     '', '', .False, 'none', ,
+     'no extproc/shebang at all -- true of every genuine Rexx file seen')
+
   if failures == 0 then do
      say 'All tests passed.'
      return 0
@@ -115,4 +152,33 @@ exit main(argLine)
   end
 
   say 'FAIL 'label': expected ['expectedNamesBlank'], got ['gotNames']'
+  return 1
+
+::routine assertDetect
+  use strict arg dir, fname, line1, line2, expectInterp, expectDialect, ,
+     expectIsNonRexx, expectSource, label
+
+  file = dir || fname
+  call lineout file, line1
+  if line2 \== '' then call lineout file, line2
+  call stream file, 'c', 'close'
+
+  info = .ExtprocDialect~detect(file)
+
+  call sysfiledelete file
+
+  ok = info~at('INTERPRETER') == expectInterp ,
+     & info~at('DIALECT') == expectDialect ,
+     & info~at('ISNONREXX') == expectIsNonRexx ,
+     & info~at('SOURCE') == expectSource
+
+  if ok then do
+     say 'ok  'label
+     return 0
+  end
+
+  say 'FAIL 'label': expected interp=['expectInterp'] dialect=['expectDialect']' ,
+      'isNonRexx=['expectIsNonRexx'] source=['expectSource'], got' ,
+      'interp=['info~at('INTERPRETER')'] dialect=['info~at('DIALECT')']' ,
+      'isNonRexx=['info~at('ISNONREXX')'] source=['info~at('SOURCE')']'
   return 1

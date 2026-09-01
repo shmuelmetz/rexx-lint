@@ -38,8 +38,10 @@ rexx tests/run-tests.rex
 
 Options:
 
-- `--dialect=DIALECT` -- target dialect (accepted, not yet used to vary
-  check behavior -- see "Dialect support" below). Default: `oorexx`.
+- `--dialect=DIALECT` -- target dialect for every file given (accepted, not
+  yet used to vary check behavior -- see "Dialect support" below). Without
+  this flag, each file's own `extproc`/shebang line is consulted instead --
+  see "Dialect support" for what that does.
 - `--checks=A,B,C` -- run only these checks, by name, ignoring the default
   full set.
 - `--disable=A,B,C` -- run the default full set except these checks.
@@ -57,7 +59,31 @@ starting with `#` are ignored.
 
 ## Dialect support
 
-The `--dialect` option selects the target dialect: `classic`, `oorexx`, `regina`, `zvm`, `omvs`, `tso`, `netrexx`, `executor`.
+The `--dialect` option selects the target dialect for every file passed on
+that run: `classic`, `oorexx`, `regina`, `zvm`, `omvs`, `tso`, `netrexx`,
+`executor`.
+
+Without `--dialect`, each file's own `extproc`/shebang line is consulted
+instead (see `lib/ExtprocDialect.cls`), since a mixed real-world collection
+routinely has files that aren't Rexx at all alongside ones that are:
+
+- A file whose `extproc`/shebang plainly names a non-Rexx interpreter
+  (`perl`, `python`, a POSIX shell, ...) is reported and skipped before it
+  ever reaches the parser -- same outcome as a genuine parse failure (exit
+  code 3), but with a clear reason instead of a raw parser error.
+- A file naming a recognized Rexx interpreter (`regina`, ...) gets that
+  dialect. A file naming an *unrecognized* interpreter whose name still
+  contains "rexx" is treated as some Rexx variant this tool just doesn't
+  have a specific entry for, and falls back to `oorexx`.
+- A file with no `extproc`/shebang line at all -- true of every genuine
+  Rexx file seen in real-world testing, since the convention exists
+  specifically to route *away* from the system's default interpreter --
+  also falls back to `oorexx`, unchanged from today's behavior.
+- An interpreter name that's neither in the known-dialect table, the
+  known-non-Rexx table, nor "rexx-shaped" by name is left alone entirely --
+  this tool doesn't know what it is, and says so by doing nothing, rather
+  than guessing either way. The parser's own attempt (and its normal
+  parse-failure handling) is what actually decides that file's fate.
 
 ## Checks (implemented)
 
