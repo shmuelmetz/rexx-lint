@@ -1,0 +1,3 @@
+# Local-only real-world test data -- third-party/derived source used for
+# validation, never redistributed. See local-test-data/README.md.
+local-test-data/
