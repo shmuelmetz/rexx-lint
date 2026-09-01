@@ -27,7 +27,7 @@ to `PATH`) before running rexx-lint or its tests; run rexx-lint's own `setenv`
 script too, so its `bin/`, `lib/`, and `checks/` directories resolve regardless
 of current working directory.
 
-Two checks are implemented and tested -- see "Checks (implemented)" below.
+Three checks are implemented and tested -- see "Checks (implemented)" below.
 
 ```
 rexx bin/rexx-lint.rex [--dialect=DIALECT] file.rex [file2.rex ...]
@@ -49,6 +49,11 @@ The `--dialect` option selects the target dialect: `classic`, `oorexx`, `regina`
   (`class = 5`, `do to = 1 to 10`, etc.). Legal Rexx, since keywords aren't
   reserved words, but a style hazard for the reader. See
   `checks/KeywordAsVariable.cls` for the word list and how it was derived.
+- **`signal-control-flow`** -- flags `SIGNAL` used as an unconditional jump
+  (a label, `SIGNAL VALUE expr`, etc.) rather than to arm/disarm a condition
+  trap (`SIGNAL ON`/`SIGNAL OFF`, not flagged). `SIGNAL` drops the entire
+  active call stack, unlike `CALL` -- including `CALL ON`, which is not
+  flagged, since it preserves the stack regardless of form.
 
 ## Checks (planned)
 
@@ -56,7 +61,6 @@ The `--dialect` option selects the target dialect: `classic`, `oorexx`, `regina`
 - Compound variables as candidates for collection objects (ooRexx)
 - Nested functions as candidates for chained methods (ooRexx)
 - `\` used as an escape character (meaningless in all Rexx dialects)
-- `signal` used as control flow (flushes call stack)
 
 ## Platform
 

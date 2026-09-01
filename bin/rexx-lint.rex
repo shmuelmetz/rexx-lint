@@ -19,6 +19,7 @@ exit main(argLine)
 ::requires 'Diagnostic.cls'
 ::requires 'ShadowedSpecialVars.cls'
 ::requires 'KeywordAsVariable.cls'
+::requires 'SignalControlFlow.cls'
 
 ::routine main
   use strict arg argLine
@@ -39,7 +40,7 @@ exit main(argLine)
      return 2
   end
 
-  checks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new)
+  checks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new, .SignalControlFlow~new)
 
   totalFindings = 0
   do file over files
