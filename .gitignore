@@ -1,3 +1,7 @@
 # Local-only real-world test data -- third-party/derived source used for
 # validation, never redistributed. See local-test-data/README.md.
 local-test-data/
+
+# Generated at test-run time by run-tests.rex's CheckSelector tests --
+# not a static fixture.
+tests/fixtures/sample.rexxlintrc

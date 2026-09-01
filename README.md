@@ -27,12 +27,33 @@ to `PATH`) before running rexx-lint or its tests; run rexx-lint's own `setenv`
 script too, so its `bin/`, `lib/`, and `checks/` directories resolve regardless
 of current working directory.
 
-Four checks are implemented and tested -- see "Checks (implemented)" below.
+Seven checks are implemented and tested -- see "Checks (implemented)" below;
+every check originally planned is now in place. Suggestions for more are
+welcome (see "Collaboration").
 
 ```
-rexx bin/rexx-lint.rex [--dialect=DIALECT] file.rex [file2.rex ...]
+rexx bin/rexx-lint.rex [options] file.rex [file2.rex ...]
 rexx tests/run-tests.rex
 ```
+
+Options:
+
+- `--dialect=DIALECT` -- target dialect (accepted, not yet used to vary
+  check behavior -- see "Dialect support" below). Default: `oorexx`.
+- `--checks=A,B,C` -- run only these checks, by name, ignoring the default
+  full set.
+- `--disable=A,B,C` -- run the default full set except these checks.
+- `--config=PATH` -- read the active-check list from `PATH` instead of the
+  default `.rexxlintrc`.
+
+`--checks` and `--disable` are mutually exclusive with each other, but
+either one on the command line overrides a config file. With neither
+given, a config file is used if one is found -- an explicit `--config=`
+path, or, failing that, a file named `.rexxlintrc` in the current
+directory. With no CLI selection and no config file, every check runs.
+
+`.rexxlintrc` format: one check name per line; blank lines and lines
+starting with `#` are ignored.
 
 ## Dialect support
 
@@ -60,12 +81,28 @@ The `--dialect` option selects the target dialect: `classic`, `oorexx`, `regina`
   dialect; a backslash in a string is always two literal characters, not
   an escape sequence -- a silent, easy-to-miss bug for anyone coming from
   a language where it is one.
+- **`stem-paren-expression`** -- flags `stem.(expression)`, the classic
+  mistaken attempt at indirect/computed stem-tail access. It isn't that in
+  any dialect; it calls a routine literally named `STEM.` (trailing dot
+  included), which either fails outright or silently calls the wrong
+  thing. The correct forms are `stem.[expr]` (classic indirect tail) or a
+  real collection object.
+- **`stem-count-loop`** -- flags `DO var = ... TO stem.0` (and the `LOOP`
+  synonym), a manually-counted stem simulating an array. Superseded by
+  `.Array` with `do over` -- except when the stem was populated by
+  `address ... with output stem`, which this purely syntactic check can't
+  distinguish from the array-simulation case; see the check class's own
+  docstring for that known limitation.
+- **`nested-builtin-call`** -- flags a built-in function call whose first
+  argument is itself an immediate built-in call (`translate(strip(x))`),
+  as a candidate for ooRexx chained-method style (`x~strip~translate`).
+  Deliberately narrow: only the immediately-nested case is flagged, not a
+  nested call as a later argument or more than one level deep.
 
 ## Checks (planned)
 
-- Use of `stem.(expression)` (invalid in all dialects; dialect-specific alternatives suggested)
-- Compound variables as candidates for collection objects (ooRexx)
-- Nested functions as candidates for chained methods (ooRexx)
+None currently -- all originally-planned checks are implemented. Open to
+suggestions; see "Collaboration" below.
 
 ## Platform
 
