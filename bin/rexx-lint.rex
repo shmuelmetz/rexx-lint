@@ -20,6 +20,7 @@ exit main(argLine)
 ::requires 'ShadowedSpecialVars.cls'
 ::requires 'KeywordAsVariable.cls'
 ::requires 'SignalControlFlow.cls'
+::requires 'BackslashEscape.cls'
 
 ::routine main
   use strict arg argLine
@@ -40,7 +41,7 @@ exit main(argLine)
      return 2
   end
 
-  checks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new, .SignalControlFlow~new)
+  checks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new, .SignalControlFlow~new, .BackslashEscape~new)
 
   totalFindings = 0
   do file over files

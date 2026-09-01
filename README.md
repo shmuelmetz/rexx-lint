@@ -27,7 +27,7 @@ to `PATH`) before running rexx-lint or its tests; run rexx-lint's own `setenv`
 script too, so its `bin/`, `lib/`, and `checks/` directories resolve regardless
 of current working directory.
 
-Three checks are implemented and tested -- see "Checks (implemented)" below.
+Four checks are implemented and tested -- see "Checks (implemented)" below.
 
 ```
 rexx bin/rexx-lint.rex [--dialect=DIALECT] file.rex [file2.rex ...]
@@ -54,13 +54,18 @@ The `--dialect` option selects the target dialect: `classic`, `oorexx`, `regina`
   trap (`SIGNAL ON`/`SIGNAL OFF`, not flagged). `SIGNAL` drops the entire
   active call stack, unlike `CALL` -- including `CALL ON`, which is not
   flagged, since it preserves the stack regardless of form.
+- **`backslash-escape`** -- flags a backslash inside a string literal
+  followed by a letter that looks like a C/Python/JS-style escape code
+  (`\n`, `\t`, `\\`, etc.). Rexx has no string-escape mechanism in any
+  dialect; a backslash in a string is always two literal characters, not
+  an escape sequence -- a silent, easy-to-miss bug for anyone coming from
+  a language where it is one.
 
 ## Checks (planned)
 
 - Use of `stem.(expression)` (invalid in all dialects; dialect-specific alternatives suggested)
 - Compound variables as candidates for collection objects (ooRexx)
 - Nested functions as candidates for chained methods (ooRexx)
-- `\` used as an escape character (meaningless in all Rexx dialects)
 
 ## Platform
 

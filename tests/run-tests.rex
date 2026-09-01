@@ -13,6 +13,7 @@ exit main(argLine)
 ::requires 'ShadowedSpecialVars.cls'
 ::requires 'KeywordAsVariable.cls'
 ::requires 'SignalControlFlow.cls'
+::requires 'BackslashEscape.cls'
 
 ::routine main
   use strict arg argLine
@@ -26,6 +27,8 @@ exit main(argLine)
   failures = failures + assertFindingCount(here'fixtures\keyword-as-variable-good.rex', .KeywordAsVariable~new, 0)
   failures = failures + assertFindingCount(here'fixtures\signal-control-flow-bad.rex', .SignalControlFlow~new, 2)
   failures = failures + assertFindingCount(here'fixtures\signal-control-flow-good.rex', .SignalControlFlow~new, 0)
+  failures = failures + assertFindingCount(here'fixtures\backslash-escape-bad.rex', .BackslashEscape~new, 3)
+  failures = failures + assertFindingCount(here'fixtures\backslash-escape-good.rex', .BackslashEscape~new, 0)
 
   if failures == 0 then do
      say 'All tests passed.'
