@@ -1,0 +1,3 @@
+@Echo Off
+Echo Adding rexx-lint's bin, lib, and checks directories to PATH...
+Set path=%~dp0bin;%~dp0lib;%~dp0checks;%path%

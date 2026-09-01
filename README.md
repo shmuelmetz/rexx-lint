@@ -11,7 +11,26 @@ A static analysis tool for Rexx source code.
 
 ## Status
 
-Early development. The parser infrastructure is provided by Josep Maria Blasco's work in net-oo-rexx ([github.com/RexxLA/net-oo-rexx](https://github.com/RexxLA/net-oo-rexx)).
+Early development. The parser infrastructure is provided by Josep Maria Blasco's
+[Rexx Parser](https://github.com/JosepMariaBlasco/rexx-parser) (also distributed
+as part of [net-oo-rexx](https://github.com/RexxLA/net-oo-rexx)) -- an AST/element
+parser for Rexx, ooRexx, and Executor, written in ooRexx itself.
+
+Run the Rexx Parser's own `setenv` script (or otherwise add its `bin/` directory
+to `PATH`) before running rexx-lint or its tests; run rexx-lint's own `setenv`
+script too, so its `bin/`, `lib/`, and `checks/` directories resolve regardless
+of current working directory.
+
+One check is implemented and tested: `shadowed-special-vars`, which flags any
+assignment-like use of `RESULT`, `RC`, or `SIGL` (plain assignment, PARSE
+targets, USE ARG, DO/LOOP control and COUNTER variables, EXPOSE/USE
+LOCAL/PROCEDURE EXPOSE/DROP), using the parser's own `isAssigned` element
+attribute.
+
+```
+rexx bin/rexx-lint.rex [--dialect=DIALECT] file.rex [file2.rex ...]
+rexx tests/run-tests.rex
+```
 
 ## Dialect support
 
