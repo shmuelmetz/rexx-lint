@@ -130,6 +130,16 @@ routinely has files that aren't Rexx at all alongside ones that are:
 None currently -- all originally-planned checks are implemented. Open to
 suggestions; see "Collaboration" below.
 
+## Real-world validation corpus
+
+`samples/real-world/` holds real, third-party Rexx source (with
+redistribution rights confirmed per file) used to validate rexx-lint
+against code this project didn't write itself, beyond the synthetic
+`tests/fixtures/` cases. See `samples/real-world/README.md` for what's
+there and why. (`local-test-data/`, gitignored, holds additional
+real-world files used the same way but without clear redistribution
+rights -- local-only, never committed.)
+
 ## Platform
 
 Developed on ArcaOS; Linux compatibility is a requirement from the start. Targets submission to RexxLA.
