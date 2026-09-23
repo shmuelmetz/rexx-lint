@@ -124,6 +124,16 @@ routinely has files that aren't Rexx at all alongside ones that are:
   as a candidate for ooRexx chained-method style (`x~strip~translate`).
   Deliberately narrow: only the immediately-nested case is flagged, not a
   nested call as a later argument or more than one level deep.
+- **`bif-signature`** -- checks a built-in function call against that
+  function's signature: too many or too few arguments, an omitted required
+  argument, and a literal argument that can't be right (a negative length,
+  a position of 0, a non-number where a number is required, an option
+  letter the function doesn't accept). Uses Josep Maria Blasco's own BIF
+  table (`.Parser.BIFInfo`) rather than a copy, and is modelled on his
+  `rxcheck` utility's BIF check, but reports every problem instead of
+  stopping at the first. Only constants are type-checked, and BIFs with
+  special argument rules (`D2C`, `MAX`, `STREAM`, the stream-I/O family,
+  ...) get only the count and omitted-argument checks.
 
 ## Checks (planned)
 

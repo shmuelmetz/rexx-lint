@@ -19,6 +19,7 @@ exit main(argLine)
 ::requires 'StemParenExpression.cls'
 ::requires 'StemCountLoop.cls'
 ::requires 'NestedBuiltinCall.cls'
+::requires 'BifSignature.cls'
 
 ::routine main
   use strict arg argLine
