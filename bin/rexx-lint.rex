@@ -68,6 +68,7 @@ exit main(argLine)
 ::requires 'StemParenExpression.cls'
 ::requires 'StemCountLoop.cls'
 ::requires 'NestedBuiltinCall.cls'
+::requires 'BifSignature.cls'
 
 ::routine main
   use strict arg argLine
@@ -105,7 +106,7 @@ exit main(argLine)
 
   allChecks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new, ,
      .SignalControlFlow~new, .BackslashEscape~new, .StemParenExpression~new, ,
-     .StemCountLoop~new, .NestedBuiltinCall~new)
+     .StemCountLoop~new, .NestedBuiltinCall~new, .BifSignature~new)
 
   checks = .CheckSelector~select(allChecks, onlyList, disableList, configPath)
 
