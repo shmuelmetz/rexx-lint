@@ -1,3 +1,5 @@
+Sent 2026-09-14.
+
 **Subject:** Re: rexx-lint — a static-analysis linter built on your Rexx Parser
 
 Hi Josep Maria,
@@ -13,8 +15,10 @@ fixtures. It expects your Rexx Parser alongside it; the README covers
 pointing it there.
 
 Since you asked in spirit what prompted it: I've been leaning heavily
-on an AI assistant (Claude) for Rexx work, and it kept producing code
-with style problems and the occasional outright syntax error. I wanted
+on an AI assistant (Claude) for development work, I directed it to
+generate ooRexx code because I'm comfortable with the language, and it
+kept producing code with style problems and the occasional outright
+syntax error. I wanted
 a linter in the loop so I wasn't flagging the same thing by hand over
 and over. So the checks lean toward the mistakes a fluent-but-careless
 writer makes — `RC` / `RESULT` / `SIGL` reused as ordinary variables,
