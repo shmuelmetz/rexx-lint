@@ -1,13 +1,3 @@
-# Draft reply to Josep Maria Blasco (2nd message)
-
-Status: sent. His reply: interested but
-time-pressed (EPBCN work + a deadline project with Rony), wants a
-download page, and pointed at **rxcheck** (has checks for BIFs with
-the wrong signature and targetless SIGNAL). He signs himself
-**"Josep Maria"** and asked to be addressed that way, not "Josep".
-
----
-
 **Subject:** Re: rexx-lint — a static-analysis linter built on your Rexx Parser
 
 Hi Josep Maria,
