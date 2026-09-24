@@ -10,7 +10,7 @@
  * shebang line serves the same purpose on Unix-like systems,
  * sometimes present as a second line right after "extproc" so both
  * conventions cooperate on the same file -- verified against real
- * files in local-test-data/utility-cmd/ (not committed), e.g.
+ * files in local-test-data/utility-cmd/ (not committed), e.g.,
  * "extproc perl -STw" on line 1 followed by "#!/usr/bin/perl -Tw"
  * on line 2.
  *
@@ -73,7 +73,7 @@
 ::method knownNonRexxInterpreters class
   /* Common shebang/extproc targets that are definitely not any Rexx
    * dialect. Space-separated, checked with WORDPOS (whole-word,
-   * not substring) so e.g. "sh" doesn't false-match inside "bash". */
+   * not substring) so e.g., "sh" doesn't false-match inside "bash". */
   return 'perl perl5 python python2 python3 bash sh ksh csh tcsh zsh' ,
       || ' awk gawk nawk tclsh wish ruby jruby node nodejs lua php' ,
       || ' pwsh powershell'

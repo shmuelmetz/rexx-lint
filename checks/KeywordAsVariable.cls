@@ -1,12 +1,12 @@
 /* KeywordAsVariable.cls -- flags a simple variable whose name is
  * also a Rexx/ooRexx keyword instruction, keyword clause, or common
- * subkeyword (e.g. `class = 5`, `do to = 1 to 10`).
+ * subkeyword (e.g., `class = 5`, `do to = 1 to 10`).
  *
  * This is legal Rexx: keywords are not reserved words, and the
  * Rexx Parser correctly resolves each occurrence by context (an
  * EL.KEYWORD/EL.SUBKEYWORD element in keyword position, an
  * EL.SIMPLE_VARIABLE element anywhere a variable is expected --
- * verified directly against the parser, e.g. `do to = 1 to 3` tags
+ * verified directly against the parser, e.g., `do to = 1 to 3` tags
  * the first "TO" EL.SIMPLE_VARIABLE and the second EL.SUBKEYWORD).
  * It is nonetheless a style hazard for the human reader, so this is
  * a warning, not an error -- rexx-lint checks style, not just

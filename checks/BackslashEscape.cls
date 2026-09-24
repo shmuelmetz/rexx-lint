@@ -12,7 +12,7 @@
  * and the letter n instead -- a silent, easy-to-miss bug rather than
  * a parse error, since the string is syntactically valid either way.
  * (This is unrelated to Rexx's own doubled-quote escape for embedding
- * the string's own delimiter, e.g. "she said ""hi""", which the
+ * the string's own delimiter, e.g., "she said ""hi""", which the
  * parser already handles and which this check does not touch.)
  *
  * Real-world false-positive finding, 2026-09-01: run against 72
@@ -29,7 +29,7 @@
  * every case actually observed in that one corpus, but it's an
  * overfit proxy, not a real test of "is this a path" -- it was tuned
  * to the specific letters and words that corpus happened to contain,
- * and would not reliably generalize (e.g. it does nothing to
+ * and would not reliably generalize (e.g., it does nothing to
  * recognize an actual path *as* a path; it just happens to
  * distinguish "backup"/"temp"/"news" from single letters by luck of
  * which letter follows).
@@ -58,7 +58,7 @@
  *
  * Known remaining gaps in those 3, honestly not solved:
  * - A path built by concatenating a variable with a short literal
- *   fragment, e.g. `drive'\backup.log is older than'`, only has that
+ *   fragment, e.g., `drive'\backup.log is older than'`, only has that
  *   literal fragment visible to this check -- one backslash, no
  *   drive letter, and (in this specific real example) trailing text
  *   after the extension-like part means even the ending-pattern test
@@ -131,7 +131,7 @@
      letterBefore = text~substr(pos - 1, 1)
      if self~isLetter(letterBefore) then do
         /* Confirm it's a single-letter drive, not the tail end of a
-           longer word ending in a letter right before ":\" (e.g.
+           longer word ending in a letter right before ":\" (e.g.,
            "etc:\" would be a false structural match otherwise) --
            the character before the letter, if any, must not itself
            be a letter. Position 0 doesn't exist (SUBSTR requires a

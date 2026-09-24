@@ -1,5 +1,5 @@
 /* NestedBuiltinCall.cls -- flags a built-in function call whose first
- * argument is itself an immediate built-in function call, e.g.
+ * argument is itself an immediate built-in function call, e.g.,
  * `translate(strip(x))`, as a candidate for ooRexx chained-method
  * style: `x~strip~translate`.
  *
@@ -88,5 +88,5 @@
 
   msg = "'"outerElement~value"("innerElement~value"(...))' -- nested" ,
         || " built-in calls read inside-out; consider chained methods" ,
-        || " instead, e.g. 'x~"innerElement~value~lower"~"outerElement~value~lower"'"
+        || " instead, e.g., 'x~"innerElement~value~lower"~"outerElement~value~lower"'"
   return .Diagnostic~new(lineNum, colNum, msg, self~name)
