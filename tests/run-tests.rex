@@ -126,9 +126,19 @@ exit main(argLine)
   failures = failures + assertUnsupported(extprocDir, 'prog.crexx', ,
      'options levelb', 'say 1', 'cREXX', 'extension', ,
      '.crexx extension with no shebang/extproc')
+  failures = failures + assertUnsupported(extprocDir, 'bom-shebang.tmp', ,
+     x2c('EFBBBF') || '#!/usr/bin/env crexx', '', 'cREXX', 'shebang', ,
+     'UTF-8 BOM before #!/usr/bin/env crexx -- BOM ignored')
+  failures = failures + assertDetect(extprocDir, 'bom-extproc.tmp', ,
+     x2c('EFBBBF') || 'extproc perl -STw', '', ,
+     'perl', '', .True, 'extproc', ,
+     'UTF-8 BOM before extproc perl -- BOM ignored')
   failures = failures + assertUnsupported(extprocDir, 'plain.rexx.tmp', ,
      '/* plain */', 'say 1', '', 'none', ,
      'plain Rexx file -- not flagged')
+
+  failures = failures + assertBomLint(extprocDir, 'bom-lint.tmp', ,
+     'a UTF-8 BOM before the first line is stripped before parsing')
 
   if failures == 0 then do
      say 'All tests passed.'
@@ -219,4 +229,31 @@ exit main(argLine)
 
   say 'FAIL 'label': expected unsupported=['expectUnsupported'] source=['expectSource'], got' ,
       'unsupported=['info~at('UNSUPPORTED')'] source=['info~at('SOURCE')']'
+  return 1
+
+::routine assertBomLint
+  use strict arg dir, fname, label
+
+  file = dir || fname
+  call lineout file, x2c('EFBBBF') || '/* bom */'
+  call lineout file, "x = substr('a')"
+  call stream file, 'c', 'close'
+
+  source = .ExtprocDialect~sourceWithoutBom(file)
+  noBomFile = dir || 'plain-nobom.tmp'
+  call lineout noBomFile, '/* plain */'
+  call stream noBomFile, 'c', 'close'
+  plain = .ExtprocDialect~sourceWithoutBom(noBomFile)
+  call sysfiledelete noBomFile
+
+  parser = .Rexx.Parser~new(file, source)
+  diagnostics = .BifSignature~new~run(parser)
+  call sysfiledelete file
+
+  if source \== .Nil, plain == .Nil, diagnostics~items == 1 then do
+     say 'ok  'label
+     return 0
+  end
+
+  say 'FAIL 'label': source' (source == .Nil) 'plainNil' (plain == .Nil) 'findings' diagnostics~items
   return 1

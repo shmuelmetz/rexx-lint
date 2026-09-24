@@ -77,6 +77,9 @@ routinely has files that aren't Rexx at all alongside ones that are:
   cREXX Level B is a typed Rexx-family language the Rexx Parser cannot read,
   and the "rexx" in `crexx`/`rexxscript` would otherwise fall through to the
   `oorexx` fallback below. `options levelb` in the body is not consulted.
+- A leading UTF-8 byte-order mark is ignored: it is stripped before the
+  `extproc`/shebang test and before parsing, since the Rexx Parser rejects it as
+  an invalid character. UTF-16/32 files are not handled.
 - A file naming a recognized Rexx interpreter (`regina`, ...) gets that
   dialect. A file naming an *unrecognized* interpreter whose name still
   contains "rexx" is treated as some Rexx variant this tool just doesn't
