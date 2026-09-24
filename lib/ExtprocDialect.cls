@@ -62,6 +62,14 @@
   table~put('executor',     'executor')
   return table
 
+::method crexxInterpreters class
+  /* cREXX toolchain names (compiler, assembler, linker, VMs, packer,
+   * RexxScript runner). Checked with WORDPOS before the "rexx in the
+   * name" heuristic below, which would otherwise misfile "crexx" and
+   * "rexxscript" as ooRexx. cREXX Level B is a typed Rexx-family
+   * language the Rexx Parser cannot read. */
+  return 'crexx rxc rxas rxlink rxvm rxvme rxbvm rxtvm rxcpack rexxscript'
+
 ::method knownNonRexxInterpreters class
   /* Common shebang/extproc targets that are definitely not any Rexx
    * dialect. Space-separated, checked with WORDPOS (whole-word,
@@ -75,7 +83,10 @@
  *   INTERPRETER  the raw interpreter token found, or '' if none
  *   DIALECT      an inferred --dialect= value, or '' if none inferred
  *   ISNONREXX    .True if the interpreter is a known non-Rexx one
- *   SOURCE       'extproc', 'shebang', or 'none'
+ *   UNSUPPORTED  'cREXX' if the file is a cREXX source the Rexx Parser
+ *                cannot read (named by its extproc/shebang interpreter
+ *                or, failing that, its .crexx/.crx extension), else ''
+ *   SOURCE       'extproc', 'shebang', 'extension', or 'none'
  * Never raises on a missing/unreadable file -- returns the all-empty
  * default instead, since the caller's own parse attempt is what
  * actually needs to handle that case. */
@@ -86,6 +97,7 @@
   info~put('',      'INTERPRETER')
   info~put('',      'DIALECT')
   info~put(.False,  'ISNONREXX')
+  info~put('',      'UNSUPPORTED')
   info~put('none',  'SOURCE')
 
   lines = self~firstLines(file)
@@ -111,12 +123,24 @@
      end
   end
 
-  if interpreter == '' then return info
+  if interpreter == '' then do
+     ext = file~substr(file~lastPos('.'))~lower
+     if file~lastPos('.') > 0, wordPos(ext, '.crexx .crx') > 0 then do
+        info~put('cREXX',     'UNSUPPORTED')
+        info~put('extension', 'SOURCE')
+     end
+     return info
+  end
 
   info~put(interpreter, 'INTERPRETER')
   info~put(source,      'SOURCE')
 
   base = self~basename(interpreter)~lower
+
+  if wordPos(base, self~crexxInterpreters) > 0 then do
+     info~put('cREXX', 'UNSUPPORTED')
+     return info
+  end
 
   table = self~dialectTable
   if table~hasIndex(base) then do

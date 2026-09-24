@@ -122,6 +122,13 @@ exit main(argLine)
            parseFailures = parseFailures + 1
            iterate
         end
+        if info~at('UNSUPPORTED') \== '' then do
+           say file': not supported (' || info~at('SOURCE') || ' marks it as' ,
+               info~at('UNSUPPORTED') || ', which the Rexx Parser cannot read)' ,
+               || ' -- skipped'
+           parseFailures = parseFailures + 1
+           iterate
+        end
         fileDialect = info~at('DIALECT')
         if fileDialect == '' then fileDialect = 'oorexx'
      end
