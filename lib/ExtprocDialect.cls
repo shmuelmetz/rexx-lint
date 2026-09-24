@@ -102,6 +102,15 @@
 
   lines = self~firstLines(file)
 
+  /* A UTF-8 byte-order mark ahead of the first line would hide a leading
+   * "#!" or "extproc" from the tests below, so strip it. UTF-16/32
+   * files are left alone: their NUL bytes defeat these text tests, and
+   * the parser cannot read them either. */
+  if lines~items > 0 then do
+     first = lines[1]
+     if first~left(3) == x2c('EFBBBF') then lines[1] = first~substr(4)
+  end
+
   interpreter = ''
   source = 'none'
   do line over lines
@@ -157,6 +166,32 @@
      info~put('oorexx', 'DIALECT')
 
   return info
+
+/* sourceWithoutBom -- for a file that starts with a UTF-8 byte-order
+ * mark, the file's lines as an Array with the mark removed, ready to
+ * hand to .Rexx.Parser~new(file, source), which otherwise rejects the
+ * mark as an invalid character. Returns .Nil for a file with no mark
+ * (or an unreadable one), meaning "let the parser load it itself". */
+::method sourceWithoutBom class
+  use strict arg file
+
+  str = .Nil
+  signal on syntax name NoBom
+  signal on notready name NoBom
+
+  str = .stream~new(file)
+  head = str~charin(1, 3)
+  if head \== x2c('EFBBBF') then signal NoBom
+  str~close
+  str = .stream~new(file)
+  lines = str~arrayIn
+  str~close
+  if lines~items > 0 then lines[1] = lines[1]~substr(4)
+  return lines
+
+NoBom:
+  if str \== .Nil then str~close
+  return .Nil
 
 ::method firstLines class
   use strict arg file

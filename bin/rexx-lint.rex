@@ -158,7 +158,7 @@ exit main(argLine)
 
   signal on syntax name ParseFailed
 
-  parser = .Rexx.Parser~new(file)
+  parser = .Rexx.Parser~new(file, .ExtprocDialect~sourceWithoutBom(file))
 
   findingCount = 0
   do check over checks
