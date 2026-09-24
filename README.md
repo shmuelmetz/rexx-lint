@@ -71,6 +71,12 @@ routinely has files that aren't Rexx at all alongside ones that are:
   (`perl`, `python`, a POSIX shell, ...) is reported and skipped before it
   ever reaches the parser -- same outcome as a genuine parse failure (exit
   code 3), but with a clear reason instead of a raw parser error.
+- A cREXX source -- its `extproc`/shebang names a cREXX tool (`crexx`,
+  `rxc`, `rxvm`, `rexxscript`, ...), or, with neither line, it has a `.crexx` or
+  `.crx` extension -- is reported as unsupported and skipped (exit code 3).
+  cREXX Level B is a typed Rexx-family language the Rexx Parser cannot read,
+  and the "rexx" in `crexx`/`rexxscript` would otherwise fall through to the
+  `oorexx` fallback below. `options levelb` in the body is not consulted.
 - A file naming a recognized Rexx interpreter (`regina`, ...) gets that
   dialect. A file naming an *unrecognized* interpreter whose name still
   contains "rexx" is treated as some Rexx variant this tool just doesn't
