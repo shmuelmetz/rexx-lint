@@ -158,9 +158,23 @@ exit main(argLine)
 
   signal on syntax name ParseFailed
 
-  parser = .Rexx.Parser~new(file, .ExtprocDialect~sourceWithoutBom(file))
+  source = .ExtprocDialect~sourceWithoutBom(file)
+  parser = .Rexx.Parser~new(file, source)
 
   findingCount = 0
+
+  /* The BOM was stripped only so linting can continue. Never silently:
+   * ooRexx 5.2 itself rejects a leading BOM in every case tried (before a
+   * comment, before code, before a shebang: Error 13.1), and a BOM also
+   * hides a first-line comment, extproc or shebang from any interpreter
+   * or kernel that expects it at byte 1. So it is reported as a finding. */
+  if source \== .Nil then do
+     bomMsg = 'UTF-8 byte-order mark ignored for linting; ooRexx 5.2 rejects' ,
+        || ' it (Error 13.1), and it hides a first-line comment, extproc or' ,
+        || ' shebang from any interpreter that expects one at byte 1'
+     say file':'.Diagnostic~new(1, 1, bomMsg, 'utf8-bom')~format
+     findingCount = findingCount + 1
+  end
   do check over checks
      diagnostics = check~run(parser)
      do d over diagnostics
