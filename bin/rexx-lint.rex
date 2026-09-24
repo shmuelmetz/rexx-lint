@@ -169,9 +169,9 @@ exit main(argLine)
    * hides a first-line comment, extproc or shebang from any interpreter
    * or kernel that expects it at byte 1. So it is reported as a finding. */
   if source \== .Nil then do
-     bomMsg = 'UTF-8 byte-order mark ignored for linting; ooRexx 5.2 rejects' ,
-        || ' it (Error 13.1), and it hides a first-line comment, extproc or' ,
-        || ' shebang from any interpreter that expects one at byte 1'
+     bomMsg = 'UTF-8 byte-order mark ignored for linting; interpreters may' ,
+        || ' reject it (e.g. ooRexx 5.2: Error 13.1) or miss a first-line' ,
+        || ' comment, extproc or shebang that must start at byte 1'
      say file':'.Diagnostic~new(1, 1, bomMsg, 'utf8-bom')~format
      findingCount = findingCount + 1
   end
