@@ -143,7 +143,7 @@ exit main(argLine)
 
 /* lintFile -- parse and check one file. Returns the finding count on
  * success, or -1 if the file could not be parsed at all (invalid
- * Rexx, or genuinely not Rexx -- e.g. a .cmd file routed to a
+ * Rexx, or genuinely not Rexx -- e.g., a .cmd file routed to a
  * different interpreter via "extproc perl"; real-world testing
  * against 111 files from an actual ArcaOS-era script collection
  * found over a third weren't Rexx source at all, which crashed the
@@ -170,7 +170,7 @@ exit main(argLine)
    * or kernel that expects it at byte 1. So it is reported as a finding. */
   if source \== .Nil then do
      bomMsg = 'UTF-8 byte-order mark ignored for linting; interpreters may' ,
-        || ' reject it (e.g. ooRexx 5.2: Error 13.1) or miss a first-line' ,
+        || ' reject it (e.g., ooRexx 5.2: Error 13.1) or miss a first-line' ,
         || ' comment, extproc or shebang that must start at byte 1'
      say file':'.Diagnostic~new(1, 1, bomMsg, 'utf8-bom')~format
      findingCount = findingCount + 1

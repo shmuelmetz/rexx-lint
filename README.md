@@ -80,7 +80,7 @@ routinely has files that aren't Rexx at all alongside ones that are:
 - A leading UTF-8 byte-order mark is stripped so linting can continue (the
   Rexx Parser rejects it as an invalid character), but never silently: it is
   reported as a `utf8-bom` finding at 1:1. Interpreters may reject a BOM
-  (e.g. ooRexx 5.2, which gave Error 13.1 in every case tried: before a
+  (e.g., ooRexx 5.2, which gave Error 13.1 in every case tried: before a
   comment, code, or a shebang) or miss a first-line comment, `extproc` or
   shebang that must start at byte 1, so it cannot be treated as harmless.
   UTF-16/32 files are not handled.
