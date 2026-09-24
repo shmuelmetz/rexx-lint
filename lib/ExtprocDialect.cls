@@ -73,7 +73,7 @@
 ::method knownNonRexxInterpreters class
   /* Common shebang/extproc targets that are definitely not any Rexx
    * dialect. Space-separated, checked with WORDPOS (whole-word,
-   * not substring) so e.g., "sh" doesn't false-match inside "bash". */
+   * not substring) so, e.g., "sh" doesn't false-match inside "bash". */
   return 'perl perl5 python python2 python3 bash sh ksh csh tcsh zsh' ,
       || ' awk gawk nawk tclsh wish ruby jruby node nodejs lua php' ,
       || ' pwsh powershell'
