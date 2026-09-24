@@ -114,6 +114,22 @@ exit main(argLine)
      '', '', .False, 'none', ,
      'no extproc/shebang at all -- true of every genuine Rexx file seen')
 
+  failures = failures + assertUnsupported(extprocDir, 'crexx-shebang.tmp', ,
+     '#!/usr/bin/env crexx', '', 'cREXX', 'shebang', ,
+     '#!/usr/bin/env crexx -- cREXX, not misfiled as ooRexx')
+  failures = failures + assertUnsupported(extprocDir, 'crexx-extproc.tmp', ,
+     'extproc rxvm', '', 'cREXX', 'extproc', ,
+     'extproc rxvm -- cREXX VM named by extproc')
+  failures = failures + assertUnsupported(extprocDir, 'rexxscript.tmp', ,
+     '#!/usr/bin/rexxscript', '', 'cREXX', 'shebang', ,
+     '#!/usr/bin/rexxscript -- name contains rexx, still cREXX')
+  failures = failures + assertUnsupported(extprocDir, 'prog.crexx', ,
+     'options levelb', 'say 1', 'cREXX', 'extension', ,
+     '.crexx extension with no shebang/extproc')
+  failures = failures + assertUnsupported(extprocDir, 'plain.rexx.tmp', ,
+     '/* plain */', 'say 1', '', 'none', ,
+     'plain Rexx file -- not flagged')
+
   if failures == 0 then do
      say 'All tests passed.'
      return 0
@@ -182,4 +198,25 @@ exit main(argLine)
       'isNonRexx=['expectIsNonRexx'] source=['expectSource'], got' ,
       'interp=['info~at('INTERPRETER')'] dialect=['info~at('DIALECT')']' ,
       'isNonRexx=['info~at('ISNONREXX')'] source=['info~at('SOURCE')']'
+  return 1
+
+::routine assertUnsupported
+  use strict arg dir, fname, line1, line2, expectUnsupported, expectSource, label
+
+  file = dir || fname
+  call lineout file, line1
+  if line2 \== '' then call lineout file, line2
+  call stream file, 'c', 'close'
+
+  info = .ExtprocDialect~detect(file)
+
+  call sysfiledelete file
+
+  if info~at('UNSUPPORTED') == expectUnsupported , info~at('SOURCE') == expectSource then do
+     say 'ok  'label
+     return 0
+  end
+
+  say 'FAIL 'label': expected unsupported=['expectUnsupported'] source=['expectSource'], got' ,
+      'unsupported=['info~at('UNSUPPORTED')'] source=['info~at('SOURCE')']'
   return 1
