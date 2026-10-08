@@ -27,21 +27,21 @@ exit main(argLine)
   here = filespec('location', .context~package~name)
 
   failures = 0
-  failures = failures + assertFindingCount(here'fixtures\shadowed-vars-bad.rex', .ShadowedSpecialVars~new, 2)
-  failures = failures + assertFindingCount(here'fixtures\shadowed-vars-good.rex', .ShadowedSpecialVars~new, 0)
-  failures = failures + assertFindingCount(here'fixtures\keyword-as-variable-bad.rex', .KeywordAsVariable~new, 4)
-  failures = failures + assertFindingCount(here'fixtures\keyword-as-variable-good.rex', .KeywordAsVariable~new, 0)
-  failures = failures + assertFindingCount(here'fixtures\signal-control-flow-bad.rex', .SignalControlFlow~new, 2)
-  failures = failures + assertFindingCount(here'fixtures\signal-control-flow-good.rex', .SignalControlFlow~new, 0)
-  failures = failures + assertFindingCount(here'fixtures\backslash-escape-bad.rex', .BackslashEscape~new, 3)
-  failures = failures + assertFindingCount(here'fixtures\backslash-escape-good.rex', .BackslashEscape~new, 0)
-  failures = failures + assertFindingCount(here'fixtures\backslash-escape-known-limitation.rex', .BackslashEscape~new, 2)
-  failures = failures + assertFindingCount(here'fixtures\stem-paren-expression-bad.rex', .StemParenExpression~new, 1)
-  failures = failures + assertFindingCount(here'fixtures\stem-paren-expression-good.rex', .StemParenExpression~new, 0)
-  failures = failures + assertFindingCount(here'fixtures\stem-count-loop-bad.rex', .StemCountLoop~new, 1)
-  failures = failures + assertFindingCount(here'fixtures\stem-count-loop-good.rex', .StemCountLoop~new, 0)
-  failures = failures + assertFindingCount(here'fixtures\nested-builtin-call-bad.rex', .NestedBuiltinCall~new, 2)
-  failures = failures + assertFindingCount(here'fixtures\nested-builtin-call-good.rex', .NestedBuiltinCall~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/shadowed-vars-bad.rex', .ShadowedSpecialVars~new, 2)
+  failures = failures + assertFindingCount(here'fixtures/shadowed-vars-good.rex', .ShadowedSpecialVars~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-bad.rex', .KeywordAsVariable~new, 4)
+  failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-good.rex', .KeywordAsVariable~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/signal-control-flow-bad.rex', .SignalControlFlow~new, 2)
+  failures = failures + assertFindingCount(here'fixtures/signal-control-flow-good.rex', .SignalControlFlow~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/backslash-escape-bad.rex', .BackslashEscape~new, 3)
+  failures = failures + assertFindingCount(here'fixtures/backslash-escape-good.rex', .BackslashEscape~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/backslash-escape-known-limitation.rex', .BackslashEscape~new, 2)
+  failures = failures + assertFindingCount(here'fixtures/stem-paren-expression-bad.rex', .StemParenExpression~new, 1)
+  failures = failures + assertFindingCount(here'fixtures/stem-paren-expression-good.rex', .StemParenExpression~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/stem-count-loop-bad.rex', .StemCountLoop~new, 1)
+  failures = failures + assertFindingCount(here'fixtures/stem-count-loop-good.rex', .StemCountLoop~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-bad.rex', .NestedBuiltinCall~new, 2)
+  failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-good.rex', .NestedBuiltinCall~new, 0)
 
   /* CheckSelector.cls unit tests -- tested directly in-process rather
    * than via a CLI subprocess. address system does support this (a
@@ -68,7 +68,7 @@ exit main(argLine)
      'shadowed-special-vars keyword-as-variable signal-control-flow', ,
      'no selection at all returns every check')
 
-  configFile = here'fixtures\sample.rexxlintrc'
+  configFile = here'fixtures/sample.rexxlintrc'
   call lineout configFile, '# comment and a blank line follow'
   call lineout configFile, ''
   call lineout configFile, 'signal-control-flow'
@@ -84,7 +84,7 @@ exit main(argLine)
    * assertDetect(dir, fname, line1, line2, expectInterp, expectDialect,
    * expectIsNonRexx, expectSource, label). Pass '' for line2 when the
    * fixture is only one line long. */
-  extprocDir = here'fixtures\'
+  extprocDir = here'fixtures/'
   failures = failures + assertDetect(extprocDir, 'perl-extproc.tmp', ,
      'extproc G:\emx\bin\perl -STw', '', ,
      'G:\emx\bin\perl', '', .True, 'extproc', ,
@@ -140,6 +140,8 @@ exit main(argLine)
   failures = failures + assertBomLint(extprocDir, 'bom-lint.tmp', ,
      'a UTF-8 BOM before the first line is stripped before parsing')
 
+  failures = failures + assertKnownArgTypes()
+
   if failures == 0 then do
      say 'All tests passed.'
      return 0
@@ -149,6 +151,12 @@ exit main(argLine)
 
 ::routine assertFindingCount
   use strict arg file, check, expectedCount
+
+  /* A missing fixture must fail, not pass as zero findings. */
+  if .File~new(file)~isFile = .False then do
+     say 'FAIL 'file': fixture not found'
+     return 1
+  end
 
   parser = .Rexx.Parser~new(file)
   diagnostics = check~run(parser)
@@ -229,6 +237,31 @@ exit main(argLine)
 
   say 'FAIL 'label': expected unsupported=['expectUnsupported'] source=['expectSource'], got' ,
       'unsupported=['info~at('UNSUPPORTED')'] source=['info~at('SOURCE')']'
+  return 1
+
+/* assertKnownArgTypes -- every argument type in the parser's BIF table
+ * must be either one of bif-signature's named types or a set of option
+ * letters. A failure here means the parser has a new named type and
+ * BifSignature's NAMEDTYPES needs it. */
+::routine assertKnownArgTypes
+  unknown = .Set~new
+  do name over .Parser.BIFInfo
+     types = .Parser.BIFInfo[name]~argType
+     if types == .Nil then iterate
+     do type over types
+        if type == .Nil then iterate
+        if .BifSignature~NAMEDTYPES~wordpos(type) > 0 then iterate
+        if .BifSignature~isLetterSet(type) then iterate
+        unknown[] = type
+     end
+  end
+
+  if unknown~items = 0 then do
+     say 'ok  every parser argument type is a named type or a letter set'
+     return 0
+  end
+
+  say 'FAIL parser argument types unknown to bif-signature:' unknown~allItems~sort~makeString('L', ' ')
   return 1
 
 ::routine assertBomLint

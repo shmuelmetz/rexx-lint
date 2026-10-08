@@ -6,8 +6,13 @@
  *
  * The signature data is not duplicated here. It is Josep Maria Blasco's
  * own table -- .Parser.BIFInfo (minArgs / maxArgs / argType per BIF),
- * loaded into the environment by the Rexx Parser (bin/BIFs.cls) -- so it
- * tracks his fixes. The checks are modelled on his rxcheck utility's
+ * loaded into the environment by the Rexx Parser (bin/parser/BIFs.cls) --
+ * so it tracks his fixes, option letters included: an argument type that
+ * is not one of the named types in NAMEDTYPES is a set of option letters
+ * (BLT, ACDEIORS, ...). NAMEDTYPES itself is maintained by hand; the test
+ * suite fails if the parser introduces an argument type that is neither a
+ * named type nor shaped like a letter set, so rerun it after updating the
+ * parser. The checks are modelled on his rxcheck utility's
  * CheckBIFArgs routine, which raises the first problem as a SYNTAX
  * condition and stops; this check reports every problem, non-fatally.
  *
@@ -28,7 +33,7 @@
 
 ::constant SPECIAL 'D2C D2X MAX MIN RANDOM XRANGE STREAM ARG RXQUEUE BEEP CHARIN CHAROUT CHARS LINEIN LINEOUT LINES QUALIFY'
 ::constant EXTERNAL 'BEEP DIRECTORY FILESPEC'
-::constant LETTERSETS 'BLT MN AENO ACDEIORS BCDJEMNOSUW BDEFILMNOSTUW BDEFINOSTU CEHLMNRS CEFHLMNORST CFHLMNOST CN CDEGOS DELNP SDC ABILMNOSUVWX9'
+::constant NAMEDTYPES 'ANY PAD SEP STREAM BIN HEX SYM RANGE UNI UTF8 D2 F ACEFILNOR NUM LENGTH POS WHOLE WHOLE>0 WHOLE>=0 MAX MIN 0_90 0_99'
 
 ::method name
   return 'bif-signature'
@@ -142,7 +147,6 @@
   numeric digits max(9, value~length + 2)
 
   select case type
-     when 'ANY', 'PAD', 'SEP', 'STREAM', 'BIN', 'HEX', 'SYM', 'RANGE', 'UNI', 'UTF8', 'D2', 'F', 'ACEFILNOR' then return ''
      when 'NUM' then do
         if \value~datatype('N') then return "must be a number, not '"value"'"
      end
@@ -155,12 +159,24 @@
         end
      end
      otherwise do
-        if self~LETTERSETS~wordpos(type) > 0 then
+        if self~isLetterSet(type) then
            if value~length > 0, type~pos(value~left(1)~upper) == 0 then
               return "'"value"' is not one of the option letters" type
      end
   end
   return ''
+
+/* isLetterSet -- .True if an argument type from .Parser.BIFInfo is a set
+ * of option letters: not a named type, and made only of A-Z and 9. */
+::method isLetterSet class
+  use strict arg type
+
+  if self~NAMEDTYPES~wordpos(type) > 0 then return .False
+  return type~verify('ABCDEFGHIJKLMNOPQRSTUVWXYZ9') = 0
+
+::method isLetterSet
+  use strict arg type
+  return self~class~isLetterSet(type)
 
 ::method report private
   use strict arg diagnostics, name, text

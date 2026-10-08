@@ -15,7 +15,7 @@
  * String-object method equivalent. Given that coverage, this check
  * relies on the Rexx Parser's own BUILTIN.FUNCTION.NAME recognition
  * (it already carries a real, maintained BIF list -- see
- * rexx-parser/bin/BIFs.cls) rather than a hand-curated word list of
+ * rexx-parser/bin/parser/BIFs.cls) rather than a hand-curated word list of
  * its own, which would only risk being a worse copy of the same
  * information.
  *
