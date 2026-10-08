@@ -92,7 +92,11 @@ routinely has files that aren't Rexx at all alongside ones that are:
 - A file with no `extproc`/shebang line at all -- true of every genuine
   Rexx file seen in real-world testing, since the convention exists
   specifically to route *away* from the system's default interpreter --
-  also falls back to `oorexx`, unchanged from today's behavior.
+  is taken to be classic Rexx, unless its code uses ooRexx-only syntax
+  (`~`, `~~`, `[ ]`, `::` directives, or environment symbols such as
+  `.Array`). Then it is treated as ooRexx, and a `note` (not counted as a
+  finding) says which construct decided it, e.g. "dialect inferred as
+  ooRexx from '~' (message operator)".
 - An interpreter name that's neither in the known-dialect table, the
   known-non-Rexx table, nor "rexx-shaped" by name is left alone entirely --
   this tool doesn't know what it is, and says so by doing nothing, rather
@@ -103,10 +107,11 @@ The dialect then decides which checks run:
 
 - `nested-builtin-call` and `stem-count-loop` give ooRexx-only advice
   (chained methods, `.Array` with `DO OVER`), so they run only when the
-  dialect is `oorexx` or `executor` *and* was named explicitly, by
-  `--dialect` or by the file's own `extproc`/shebang -- not for the
-  `oorexx` fallback used when a file names nothing. Use `--dialect=oorexx`
-  to get them on ooRexx code without such a line.
+  dialect is `oorexx` or `executor`: named by `--dialect` or by the file's
+  own `extproc`/shebang, or inferred from ooRexx syntax in the code. Not
+  for a file that names nothing and uses only classic Rexx.
+- `dialect-mismatch` runs only for a file explicitly marked `classic`,
+  `regina`, `zvm`, `omvs` or `tso`.
 - `backslash-escape` does not run for `netrexx`, which does have backslash
   escapes in string literals.
 - Every other check runs for every dialect.
@@ -154,6 +159,11 @@ The dialect then decides which checks run:
   Deliberately narrow: only the immediately-nested case is flagged, not a
   nested call as a later argument or more than one level deep. ooRexx only
   (see "Dialect support").
+- **`dialect-mismatch`** -- flags ooRexx-only syntax (`~`, `~~`, `[ ]`,
+  `::` directives) in a file explicitly marked as a non-ooRexx dialect,
+  where it will not run. Environment symbols are not flagged there: in
+  those dialects `.TRUE` is a legal constant symbol. One finding per kind
+  of construct, with the number of uses.
 - **`bif-signature`** -- checks a built-in function call against that
   function's signature: too many or too few arguments, an omitted required
   argument, and a literal argument that can't be right (a negative length,

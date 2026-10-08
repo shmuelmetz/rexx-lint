@@ -80,6 +80,8 @@ InternalError:
 ::requires 'StemCountLoop.cls'
 ::requires 'NestedBuiltinCall.cls'
 ::requires 'BifSignature.cls'
+::requires 'DialectMismatch.cls'
+::requires 'OoRexxSyntax.cls'
 
 ::routine main
   use strict arg argLine
@@ -117,7 +119,8 @@ InternalError:
 
   allChecks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new, ,
      .SignalControlFlow~new, .BackslashEscape~new, .StemParenExpression~new, ,
-     .StemCountLoop~new, .NestedBuiltinCall~new, .BifSignature~new)
+     .StemCountLoop~new, .NestedBuiltinCall~new, .BifSignature~new, ,
+     .DialectMismatch~new)
 
   checks = .CheckSelector~select(allChecks, onlyList, disableList, configPath)
 
@@ -155,7 +158,9 @@ InternalError:
         end
         fileDialect = info~at('DIALECT')
         explicit = fileDialect <> ''
-        if fileDialect == '' then fileDialect = 'oorexx'
+        /* Naming no dialect means classic Rexx, unless the code itself
+         * turns out to use ooRexx syntax (decided in lintFile). */
+        if fileDialect == '' then fileDialect = 'classic'
      end
      result = lintFile(file, fileDialect, explicit, checks)
      if result < 0 then parseFailures = parseFailures + 1
@@ -188,6 +193,20 @@ InternalError:
   parser = .Rexx.Parser~new(file, source)
 
   findingCount = 0
+
+  /* A file that names no dialect is classic Rexx unless it uses ooRexx
+   * syntax; then it is ooRexx, and the ooRexx-only checks apply. Say so,
+   * as a note (not counted as a finding), so the advice is not a mystery. */
+  if explicit = .False then do
+     signs = .OoRexxSyntax~signs(parser)
+     if signs~items > 0 then do
+        sign = signs[1]
+        dialect = 'oorexx'
+        explicit = .True
+        noteMsg = "dialect inferred as ooRexx from '"sign~text"' ("sign~kind")"
+        say file':'.Diagnostic~new(sign~line, sign~column, noteMsg, 'dialect', 'note')~format
+     end
+  end
 
   /* The BOM was stripped only so linting can continue. Never silently:
    * ooRexx 5.2 itself rejects a leading BOM in every case tried (before a

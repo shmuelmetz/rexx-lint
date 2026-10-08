@@ -20,6 +20,8 @@ exit main(argLine)
 ::requires 'StemCountLoop.cls'
 ::requires 'NestedBuiltinCall.cls'
 ::requires 'BifSignature.cls'
+::requires 'DialectMismatch.cls'
+::requires 'OoRexxSyntax.cls'
 
 ::routine main
   use strict arg argLine
@@ -42,6 +44,12 @@ exit main(argLine)
   failures = failures + assertFindingCount(here'fixtures/stem-count-loop-good.rex', .StemCountLoop~new, 0)
   failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-bad.rex', .NestedBuiltinCall~new, 2)
   failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-good.rex', .NestedBuiltinCall~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/dialect-mismatch-bad.rex', .DialectMismatch~new, 4)
+  failures = failures + assertFindingCount(here'fixtures/dialect-mismatch-good.rex', .DialectMismatch~new, 0)
+  failures = failures + assertSignCount(here'fixtures/dialect-mismatch-bad.rex', 5, ,
+     'ooRexx syntax found: ~, ~~, [], :: and an environment symbol')
+  failures = failures + assertSignCount(here'fixtures/dialect-mismatch-good.rex', 1, ,
+     'classic file: only the environment-symbol-shaped constant .TRUE')
 
   /* CheckSelector.cls unit tests -- tested directly in-process rather
    * than via a CLI subprocess. address system does support this (a
@@ -153,6 +161,9 @@ exit main(argLine)
   failures = failures + assertApplies(.StemCountLoop~new, 'tso', .True, .False)
   failures = failures + assertApplies(.BackslashEscape~new, 'netrexx', .True, .False)
   failures = failures + assertApplies(.BackslashEscape~new, 'oorexx', .False, .True)
+  failures = failures + assertApplies(.DialectMismatch~new, 'tso', .True, .True)
+  failures = failures + assertApplies(.DialectMismatch~new, 'classic', .False, .False)
+  failures = failures + assertApplies(.DialectMismatch~new, 'oorexx', .True, .False)
 
   if failures == 0 then do
      say 'All tests passed.'
@@ -274,6 +285,18 @@ exit main(argLine)
   end
 
   say 'FAIL parser argument types unknown to bif-signature:' unknown~allItems~sort~makeString('L', ' ')
+  return 1
+
+::routine assertSignCount
+  use strict arg file, expected, label
+
+  parser = .Rexx.Parser~new(file)
+  got = .OoRexxSyntax~signs(parser)~items
+  if got = expected then do
+     say 'ok  'label' ('got')'
+     return 0
+  end
+  say 'FAIL 'label': expected 'expected' kinds, got 'got
   return 1
 
 ::routine assertApplies
