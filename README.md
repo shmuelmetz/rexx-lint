@@ -38,8 +38,9 @@ rexx tests/run-tests.rex
 
 Options:
 
-- `--dialect=DIALECT` -- target dialect for every file given (accepted, not
-  yet used to vary check behavior -- see "Dialect support" below). Without
+- `--dialect=DIALECT` -- target dialect for every file given; checks whose
+  advice holds only in some dialects run only there (see "Dialect support"
+  below). Without
   this flag, each file's own `extproc`/shebang line is consulted instead --
   see "Dialect support" for what that does.
 - `--checks=A,B,C` -- run only these checks, by name, ignoring the default
@@ -98,6 +99,18 @@ routinely has files that aren't Rexx at all alongside ones that are:
   than guessing either way. The parser's own attempt (and its normal
   parse-failure handling) is what actually decides that file's fate.
 
+The dialect then decides which checks run:
+
+- `nested-builtin-call` and `stem-count-loop` give ooRexx-only advice
+  (chained methods, `.Array` with `DO OVER`), so they run only when the
+  dialect is `oorexx` or `executor` *and* was named explicitly, by
+  `--dialect` or by the file's own `extproc`/shebang -- not for the
+  `oorexx` fallback used when a file names nothing. Use `--dialect=oorexx`
+  to get them on ooRexx code without such a line.
+- `backslash-escape` does not run for `netrexx`, which does have backslash
+  escapes in string literals.
+- Every other check runs for every dialect.
+
 ## Checks (implemented)
 
 - **`shadowed-special-vars`** -- flags any assignment-like use of `RESULT`,
@@ -109,6 +122,7 @@ routinely has files that aren't Rexx at all alongside ones that are:
   (`class = 5`, `do to = 1 to 10`, etc.). Legal Rexx, since keywords aren't
   reserved words, but a style hazard for the reader. See
   `checks/KeywordAsVariable.cls` for the word list and how it was derived.
+  Reported once per variable, at its first use, with the number of uses.
 - **`signal-control-flow`** -- flags `SIGNAL` used as an unconditional jump
   (a label, `SIGNAL VALUE expr`, etc.) rather than to arm/disarm a condition
   trap (`SIGNAL ON`/`SIGNAL OFF`, not flagged). `SIGNAL` drops the entire
@@ -117,8 +131,8 @@ routinely has files that aren't Rexx at all alongside ones that are:
 - **`backslash-escape`** -- flags a backslash inside a string literal
   followed by a letter that looks like a C/Python/JS-style escape code
   (`\n`, `\t`, `\\`, etc.). No Rexx dialect except NetRexx has backslash
-  escapes in string literals; elsewhere a backslash in a string is always two literal characters, not
-  an escape sequence -- a silent, easy-to-miss bug for anyone coming from
+  escapes in string literals; elsewhere a backslash in a string is always
+  two literal characters, not an escape sequence -- a silent, easy-to-miss bug for anyone coming from
   a language where it is one.
 - **`stem-paren-expression`** -- flags `stem.(expression)`, the classic
   mistaken attempt at indirect/computed stem-tail access. It isn't that in
@@ -129,15 +143,17 @@ routinely has files that aren't Rexx at all alongside ones that are:
   works, or use a real collection object.
 - **`stem-count-loop`** -- flags `DO var = ... TO stem.0` (and the `LOOP`
   synonym), a manually-counted stem simulating an array. Superseded by
-  `.Array` with `do over` -- except when the stem was populated by
-  `address ... with output stem`, which this purely syntactic check can't
-  distinguish from the array-simulation case; see the check class's own
-  docstring for that known limitation.
+  `.Array` with `do over` -- except when the stem was filled by something
+  else: `address ... with output stem`, or a function such as `SysFileTree`
+  that returns its results in a stem. This purely syntactic check can't
+  tell those apart from the array-simulation case; see the check class's
+  own docstring. ooRexx only (see "Dialect support").
 - **`nested-builtin-call`** -- flags a built-in function call whose first
   argument is itself an immediate built-in call (`translate(strip(x))`),
   as a candidate for ooRexx chained-method style (`x~strip~translate`).
   Deliberately narrow: only the immediately-nested case is flagged, not a
-  nested call as a later argument or more than one level deep.
+  nested call as a later argument or more than one level deep. ooRexx only
+  (see "Dialect support").
 - **`bif-signature`** -- checks a built-in function call against that
   function's signature: too many or too few arguments, an omitted required
   argument, and a literal argument that can't be right (a negative length,

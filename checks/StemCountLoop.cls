@@ -23,10 +23,11 @@
  * (one of the valid `address...with` I/O types alongside NORMAL,
  * STREAM, and USING -- STEM is not the only option, but it is a
  * legitimate, common one -- see AI-Priming/ooRexx/RULES.md's
- * "address...with I/O types" section). Code of that shape will be
- * flagged here even though nothing should change about it. Not fixed
- * in this version; would require tracking whether the stem's `.0`
- * was set by an address...with clause versus a hand-written
+ * "address...with I/O types" section), or a stem filled by a function
+ * that returns its results that way, such as SysFileTree. Code of that
+ * shape will be flagged here even though nothing should change about
+ * it. Not fixed in this version; would require tracking whether the
+ * stem's `.0` was set by such a clause or call versus a hand-written
  * increment loop.
  */
 
