@@ -20,8 +20,7 @@
  * a file that names no dialect is classified by its syntax instead. */
 ::method appliesTo
   use strict arg dialect, explicit
-  if explicit = .False then return .False
-  return 'classic regina zvm omvs tso'~caselessWordPos(dialect) > 0
+  return explicit & 'classic regina zvm omvs tso'~caselessWordPos(dialect) > 0
 
 ::method name
   return 'dialect-mismatch'

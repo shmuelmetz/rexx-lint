@@ -45,8 +45,7 @@
  * for the oorexx fallback used when a file names no interpreter. */
 ::method appliesTo
   use strict arg dialect, explicit
-  if explicit = .False then return .False
-  return 'oorexx executor'~caselessWordPos(dialect) > 0
+  return explicit & 'oorexx executor'~caselessWordPos(dialect) > 0
 
 ::method name
   return 'nested-builtin-call'
@@ -62,7 +61,7 @@
         afterOuterName = self~nextMeaningful(element)
         if self~isOpenParen(afterOuterName) then do
            innerCandidate = self~nextMeaningful(afterOuterName)
-           if innerCandidate \== .Nil, innerCandidate << .BUILTIN.FUNCTION.NAME then do
+           if innerCandidate ¬== .Nil, innerCandidate << .BUILTIN.FUNCTION.NAME then do
               afterInnerName = self~nextMeaningful(innerCandidate)
               if self~isOpenParen(afterInnerName) then
                  diagnostics~append(self~makeDiagnostic(element, innerCandidate))
@@ -79,7 +78,7 @@
 
   if element == .Nil then return .Nil
   nxt = element~next
-  loop while nxt \== .Nil, nxt~ignorable
+  loop while nxt ¬== .Nil, nxt~ignorable
      nxt = nxt~next
   end
   return nxt

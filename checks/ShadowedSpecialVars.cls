@@ -34,7 +34,7 @@
   loop until element == .Nil
      if element~isAssigned then do
         shadowedName = self~matchedSpecialName(element~value)
-        if shadowedName \== .Nil then
+        if shadowedName ¬== .Nil then
            diagnostics~append(self~makeDiagnostic(element, shadowedName))
      end
      element = element~next

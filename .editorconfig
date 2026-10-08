@@ -1,0 +1,7 @@
+root = true
+
+# Rexx sources are Latin-1 (ISO 8859-1): the logical-NOT operator is the
+# NOT sign, U+00AC, which is byte 'AC'x in Latin-1. ooRexx reads source
+# as single bytes, so UTF-8 cannot be used for it.
+[*.{rex,cls,rexx,cmd}]
+charset = latin1

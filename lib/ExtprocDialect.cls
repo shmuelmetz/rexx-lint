@@ -184,16 +184,18 @@
 
   str = .stream~new(file)
   head = str~charin(1, 3)
-  if head \== x2c('EFBBBF') then signal NoBom
   str~close
-  str = .stream~new(file)
-  lines = str~arrayIn
-  str~close
-  if lines~items > 0 then lines[1] = lines[1]~substr(4)
-  return lines
+  if head == x2c('EFBBBF') then do
+     str = .stream~new(file)
+     lines = str~arrayIn
+     str~close
+     if lines~items > 0 then lines[1] = lines[1]~substr(4)
+     return lines
+  end
+  return .Nil
 
 NoBom:
-  if str \== .Nil then str~close
+  if str ¬== .Nil then str~close
   return .Nil
 
 ::method firstLines class
@@ -209,7 +211,7 @@ NoBom:
   if str~lines > 0 then lines~append(str~linein)
 
 Done:
-  if str \== .Nil then str~close
+  if str ¬== .Nil then str~close
   return lines
 
 ::method basename class

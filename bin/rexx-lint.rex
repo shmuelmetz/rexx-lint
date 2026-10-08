@@ -72,6 +72,7 @@ InternalError:
 ::requires 'Diagnostic.cls'
 ::requires 'CheckSelector.cls'
 ::requires 'ExtprocDialect.cls'
+::requires 'DialectParser.cls'
 ::requires 'ShadowedSpecialVars.cls'
 ::requires 'KeywordAsVariable.cls'
 ::requires 'SignalControlFlow.cls'
@@ -81,6 +82,7 @@ InternalError:
 ::requires 'NestedBuiltinCall.cls'
 ::requires 'BifSignature.cls'
 ::requires 'DialectMismatch.cls'
+::requires 'BooleanComparison.cls'
 ::requires 'OoRexxSyntax.cls'
 
 ::routine main
@@ -120,7 +122,7 @@ InternalError:
   allChecks = .Array~of(.ShadowedSpecialVars~new, .KeywordAsVariable~new, ,
      .SignalControlFlow~new, .BackslashEscape~new, .StemParenExpression~new, ,
      .StemCountLoop~new, .NestedBuiltinCall~new, .BifSignature~new, ,
-     .DialectMismatch~new)
+     .DialectMismatch~new, .BooleanComparison~new)
 
   checks = .CheckSelector~select(allChecks, onlyList, disableList, configPath)
 
@@ -128,7 +130,7 @@ InternalError:
   .local~rexxlint.internalErrors = 0
   parseFailures = 0
   do file over files
-     if .File~new(file)~isFile = .False then do
+     if ¬.File~new(file)~isFile then do
         say file': not found -- skipped'
         parseFailures = parseFailures + 1
         iterate
@@ -137,7 +139,7 @@ InternalError:
      /* Explicit: named by --dialect or by the file's own extproc/shebang,
       * as opposed to the oorexx fallback for a file that names nothing. */
      explicit = dialectGiven
-     if \dialectGiven then do
+     if ¬dialectGiven then do
         info = detectDialect(file)
         if info == .Nil then do
            parseFailures = parseFailures + 1
@@ -149,7 +151,7 @@ InternalError:
            parseFailures = parseFailures + 1
            iterate
         end
-        if info~at('UNSUPPORTED') \== '' then do
+        if info~at('UNSUPPORTED') ¬== '' then do
            say file': not supported (' || info~at('SOURCE') || ' marks it as' ,
                info~at('UNSUPPORTED') || ', which the Rexx Parser cannot read)' ,
                || ' -- skipped'
@@ -162,9 +164,9 @@ InternalError:
          * turns out to use ooRexx syntax (decided in lintFile). */
         if fileDialect == '' then fileDialect = 'classic'
      end
-     result = lintFile(file, fileDialect, explicit, checks)
-     if result < 0 then parseFailures = parseFailures + 1
-     else totalFindings = totalFindings + result
+     fileFindings = lintFile(file, fileDialect, explicit, checks)
+     if fileFindings < 0 then parseFailures = parseFailures + 1
+     else totalFindings = totalFindings + fileFindings
   end
 
   if .local~rexxlint.internalErrors > 0 then return 4
@@ -190,14 +192,18 @@ InternalError:
   signal on syntax name ParseFailed
 
   source = .ExtprocDialect~sourceWithoutBom(file)
-  parser = .Rexx.Parser~new(file, source)
+  /* Parsed in the Rexx Parser mode for the dialect (CMS for z/VM, TSO/E
+   * and z/OS UNIX; Executor), whether the dialect came from --dialect or
+   * from the file's own extproc/shebang line. */
+  parser = .DialectParser~parse(file, source, dialect)
+  if parser == .Nil then return -1
 
   findingCount = 0
 
   /* A file that names no dialect is classic Rexx unless it uses ooRexx
    * syntax; then it is ooRexx, and the ooRexx-only checks apply. Say so,
    * as a note (not counted as a finding), so the advice is not a mystery. */
-  if explicit = .False then do
+  if ¬explicit then do
      signs = .OoRexxSyntax~signs(parser)
      if signs~items > 0 then do
         sign = signs[1]
@@ -213,7 +219,7 @@ InternalError:
    * comment, before code, before a shebang: Error 13.1), and a BOM also
    * hides a first-line comment, extproc or shebang from any interpreter
    * or kernel that expects it at byte 1. So it is reported as a finding. */
-  if source \== .Nil then do
+  if source ¬== .Nil then do
      bomMsg = 'UTF-8 byte-order mark ignored for linting; interpreters may' ,
         || ' reject it (e.g., ooRexx 5.2: Error 13.1) or miss a first-line' ,
         || ' comment, extproc or shebang that must start at byte 1'
@@ -225,7 +231,7 @@ InternalError:
      /* A check with an appliesTo method decides for itself whether it
       * applies to this file's dialect; a check without one always does. */
      if check~hasMethod('APPLIESTO') then
-        if check~appliesTo(dialect, explicit) = .False then iterate
+        if ¬check~appliesTo(dialect, explicit) then iterate
      found~appendAll(runCheck(check, parser, file))
   end
 

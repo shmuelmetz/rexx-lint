@@ -41,8 +41,7 @@
  * for the oorexx fallback used when a file names no interpreter. */
 ::method appliesTo
   use strict arg dialect, explicit
-  if explicit = .False then return .False
-  return 'oorexx executor'~caselessWordPos(dialect) > 0
+  return explicit & 'oorexx executor'~caselessWordPos(dialect) > 0
 
 ::method name
   return 'stem-count-loop'
@@ -68,7 +67,7 @@
   use strict arg element
 
   nxt = element~next
-  loop while nxt \== .Nil, nxt~ignorable
+  loop while nxt ¬== .Nil, nxt~ignorable
      nxt = nxt~next
   end
   return nxt
@@ -77,7 +76,7 @@
   use strict arg element
 
   if element == .Nil then return .False
-  if element \< .EL.COMPOUND_VARIABLE, element \< .EL.EXPOSED_COMPOUND_VARIABLE then
+  if element ¬< .EL.COMPOUND_VARIABLE, element ¬< .EL.EXPOSED_COMPOUND_VARIABLE then
      return .False
   return element~value~right(2) == '.0'
 

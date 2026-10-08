@@ -36,7 +36,7 @@
   loop until element == .Nil
      if element < .EL.KEYWORD, element~value~caselessEquals('SIGNAL') then do
         nextWord = self~nextMeaningful(element)
-        if \self~isTrapForm(nextWord) then
+        if ¬self~isTrapForm(nextWord) then
            diagnostics~append(self~makeDiagnostic(element))
      end
      element = element~next
@@ -48,7 +48,7 @@
   use strict arg element
 
   nxt = element~next
-  loop while nxt \== .Nil, nxt~ignorable
+  loop while nxt ¬== .Nil, nxt~ignorable
      nxt = nxt~next
   end
   return nxt
@@ -57,7 +57,7 @@
   use strict arg word
 
   if word == .Nil then return .False
-  if word \< .EL.SUBKEYWORD then return .False
+  if word ¬< .EL.SUBKEYWORD then return .False
   return word~value~caselessEquals('ON') | word~value~caselessEquals('OFF')
 
 ::method makeDiagnostic private

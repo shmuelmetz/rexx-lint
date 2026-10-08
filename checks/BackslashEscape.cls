@@ -88,7 +88,7 @@
  * so this check does not run for it. */
 ::method appliesTo
   use strict arg dialect, explicit
-  return dialect~caselessEquals('netrexx') = .False
+  return dialect~lower <> 'netrexx'
 
 ::method name
   return 'backslash-escape'
@@ -101,10 +101,10 @@
   element = parser~firstElement
   loop until element == .Nil
      if element < .EL.STRING then do
-        value = element~value
-        if \self~looksLikePath(value) then do
-           letter = self~findEscapeLikeSequence(value)
-           if letter \== .Nil then
+        text = element~value
+        if ¬self~looksLikePath(text) then do
+           letter = self~findEscapeLikeSequence(text)
+           if letter ¬== .Nil then
               diagnostics~append(self~makeDiagnostic(element, letter))
         end
      end
@@ -147,7 +147,7 @@
            empty result would. */
         if pos - 2 < 1 then charBeforeThat = ''
         else charBeforeThat = text~substr(pos - 2, 1)
-        if \self~isLetter(charBeforeThat) then return .True
+        if ¬self~isLetter(charBeforeThat) then return .True
      end
      pos = text~pos(':\', pos + 1)
   end
@@ -161,7 +161,7 @@
   suffix = text~substr(dotPos + 1)
   if suffix~length < 2 | suffix~length > 4 then return .False
   do i = 1 to suffix~length
-     if \self~isLetter(suffix~substr(i, 1)) then return .False
+     if ¬self~isLetter(suffix~substr(i, 1)) then return .False
   end
   return .True
 
@@ -199,7 +199,7 @@
   pos = text~pos('\')
   loop while pos > 0
      nextCh = text~substr(pos + 1, 1)
-     if nextCh \== '', letters~pos(nextCh) > 0 then
+     if nextCh ¬== '', letters~pos(nextCh) > 0 then
         return '\' || nextCh
      pos = text~pos('\', pos + 1)
   end

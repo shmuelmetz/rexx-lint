@@ -48,20 +48,20 @@
   bodies~append(package~prolog~body)
   do fragment over package~directives
      body = fragment~body
-     if body \== .Nil, \body~isEmpty then bodies~append(body)
+     if body ¬== .Nil, ¬body~isEmpty then bodies~append(body)
   end
 
   do body over bodies
      labels = body~labels
-     do routine over body~calledRoutineNames
-        name = routine[1]
+     do called over body~calledRoutineNames
+        name = called[1]
         label = name~value
         if name < .ALL.SYMBOLS, labels~hasIndex(label) then iterate
         if .Parser.BIF[label] == .Nil then iterate
-        if package~routines[label] \== .Nil then iterate
+        if package~routines[label] ¬== .Nil then iterate
         info = .Parser.BIFInfo[label]
         if info~maxArgs == .Nil then iterate
-        self~checkCall(diagnostics, name, label, info, routine[2])
+        self~checkCall(diagnostics, name, label, info, called[2])
      end
   end
 
@@ -76,7 +76,7 @@
   maxArgs = info~maxArgs
   minArgs = info~minArgs
 
-  if maxArgs \== '*', nArgs > maxArgs then do
+  if maxArgs ¬== '*', nArgs > maxArgs then do
      self~report(diagnostics, name, label 'takes at most' maxArgs 'argument(s); called with' nArgs)
      return
   end
@@ -87,7 +87,7 @@
 
   if label == 'ARG', nArgs > 0 then minArgs = 1
   checkUpTo = minArgs - 1 + (nArgs > minArgs)
-  if maxArgs == '*', label \== 'XRANGE' then checkUpTo = nArgs
+  if maxArgs == '*', label ¬== 'XRANGE' then checkUpTo = nArgs
   do argN = 1 to checkUpTo
      if arguments~arg(argN, 'O') then do
         self~report(diagnostics, name, label': required argument' argN 'is omitted')
@@ -99,12 +99,12 @@
 
   do argN = 1 to nArgs
      if arguments~arg(argN, 'O') then iterate
-     value = self~literalValue(arguments~arg(argN))
-     if value == .Nil then iterate
+     literal = self~literalValue(arguments~arg(argN))
+     if literal == .Nil then iterate
      type = info~argType[argN]
      if type == .Nil then iterate
-     problem = self~valueProblem(type, value)
-     if problem \== '' then do
+     problem = self~valueProblem(type, literal)
+     if problem ¬== '' then do
         self~report(diagnostics, name, label': argument' argN problem)
         return
      end
@@ -113,28 +113,28 @@
 /* literalValue -- the value of a constant argument, or .Nil if the
  * argument is not a constant (a variable or a general expression). */
 ::method literalValue private
-  use strict arg arg
+  use strict arg argTerm
 
-  select case arg~class
-     when .Literal.String.Term then return arg~theString~value
+  select case argTerm~class
+     when .Literal.String.Term then return argTerm~theString~value
      when .Symbol.Term then do
-        symbol = arg~symbol
-        if symbol \< .ALL.NUMBERS then return .Nil
+        symbol = argTerm~symbol
+        if symbol ¬< .ALL.NUMBERS then return .Nil
         return symbol~value
      end
      when .Prefix.Expression then do
-        term = arg~term
-        if \term~isA(.Symbol.Term) then return .Nil
+        term = argTerm~term
+        if ¬term~isA(.Symbol.Term) then return .Nil
         symbol = term~symbol
-        if symbol \< .ALL.NUMBERS then return .Nil
+        if symbol ¬< .ALL.NUMBERS then return .Nil
         minus = .False
-        do sign over arg~prefixes
-           if sign~value == '-' then minus = \minus
-           else if sign~value \== '+' then return .Nil
+        do sign over argTerm~prefixes
+           if sign~value == '-' then minus = ¬minus
+           else if sign~value ¬== '+' then return .Nil
         end
-        value = symbol~value
-        if minus then return '-'value
-        return value
+        literal = symbol~value
+        if minus then return '-'literal
+        return literal
      end
      otherwise return .Nil
   end
@@ -142,26 +142,26 @@
 /* valueProblem -- '' if the literal is acceptable for the declared type,
  * else a short description of what is wrong. */
 ::method valueProblem private
-  use strict arg type, value
+  use strict arg type, literal
 
-  numeric digits max(9, value~length + 2)
+  numeric digits max(9, literal~length + 2)
 
   select case type
      when 'NUM' then do
-        if \value~datatype('N') then return "must be a number, not '"value"'"
+        if ¬literal~datatype('N') then return "must be a number, not '"literal"'"
      end
      when 'LENGTH', 'POS', 'WHOLE', 'WHOLE>0', 'WHOLE>=0' then do
-        if \value~datatype('W') then return "must be a whole number, not '"value"'"
+        if ¬literal~datatype('W') then return "must be a whole number, not '"literal"'"
         select case type
-           when 'LENGTH', 'WHOLE>=0' then if value < 0 then return 'must not be negative (got' value')'
-           when 'POS', 'WHOLE>0' then if value <= 0 then return 'must be greater than 0 (got' value')'
+           when 'LENGTH', 'WHOLE>=0' then if literal < 0 then return 'must not be negative (got' literal')'
+           when 'POS', 'WHOLE>0' then if literal <= 0 then return 'must be greater than 0 (got' literal')'
            otherwise nop
         end
      end
      otherwise do
         if self~isLetterSet(type) then
-           if value~length > 0, type~pos(value~left(1)~upper) == 0 then
-              return "'"value"' is not one of the option letters" type
+           if literal~length > 0, type~pos(literal~left(1)~upper) == 0 then
+              return "'"literal"' is not one of the option letters" type
      end
   end
   return ''

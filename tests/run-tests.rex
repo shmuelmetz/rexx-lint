@@ -17,6 +17,8 @@ exit main(argLine)
 ::requires 'SignalControlFlow.cls'
 ::requires 'BackslashEscape.cls'
 ::requires 'StemParenExpression.cls'
+::requires 'BooleanComparison.cls'
+::requires 'DialectParser.cls'
 ::requires 'StemCountLoop.cls'
 ::requires 'NestedBuiltinCall.cls'
 ::requires 'BifSignature.cls'
@@ -46,6 +48,15 @@ exit main(argLine)
   failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-good.rex', .NestedBuiltinCall~new, 0)
   failures = failures + assertFindingCount(here'fixtures/dialect-mismatch-bad.rex', .DialectMismatch~new, 4)
   failures = failures + assertFindingCount(here'fixtures/dialect-mismatch-good.rex', .DialectMismatch~new, 0)
+  failures = failures + assertFindingCount(here'fixtures/boolean-comparison-bad.rex', .BooleanComparison~new, 73)
+  failures = failures + assertFindingCount(here'fixtures/boolean-comparison-good.rex', .BooleanComparison~new, 0)
+  /* Parsed in the dialect's Rexx Parser mode: every NOT spelling it accepts. */
+  failures = failures + assertDialectFindingCount(here'fixtures/boolean-comparison-cms.rex', 'zvm', .BooleanComparison~new, 38)
+  failures = failures + assertDialectFindingCount(here'fixtures/boolean-comparison-cms.rex', 'tso', .BooleanComparison~new, 38)
+  failures = failures + assertDialectFindingCount(here'fixtures/boolean-comparison-executor.rex', 'executor', .BooleanComparison~new, 44)
+  /* ooRexx syntax fails in CMS mode; the default-mode retry lets
+   * dialect-mismatch report it. */
+  failures = failures + assertDialectFindingCount(here'fixtures/dialect-mismatch-bad.rex', 'zvm', .DialectMismatch~new, 4)
   failures = failures + assertSignCount(here'fixtures/dialect-mismatch-bad.rex', 5, ,
      'ooRexx syntax found: ~, ~~, [], :: and an environment symbol')
   failures = failures + assertSignCount(here'fixtures/dialect-mismatch-good.rex', 1, ,
@@ -172,17 +183,36 @@ exit main(argLine)
   say failures 'test(s) failed.'
   return 1
 
+/* assertDialectFindingCount -- as assertFindingCount, but the fixture is
+ * parsed for a dialect, in the Rexx Parser mode rexx-lint uses for it. */
+::routine assertDialectFindingCount
+  use strict arg file, dialect, check, expectedCount
+
+  parser = .DialectParser~parse(file, .Nil, dialect)
+  if parser == .Nil then do
+     say 'FAIL 'file' ('dialect'): could not parse'
+     return 1
+  end
+  diagnostics = check~run(parser)
+  if diagnostics~items == expectedCount then do
+     say 'ok  'file' ('dialect', 'expectedCount' finding(s))'
+     return 0
+  end
+  say 'FAIL 'file' ('dialect'): expected 'expectedCount' finding(s), got 'diagnostics~items
+  do d over diagnostics
+     say '     'd~format
+  end
+  return 1
+
 ::routine assertFindingCount
   use strict arg file, check, expectedCount
 
   /* A missing fixture must fail, not pass as zero findings. */
-  if .File~new(file)~isFile = .False then do
+  if ¬.File~new(file)~isFile then do
      say 'FAIL 'file': fixture not found'
      return 1
   end
-
-  parser = .Rexx.Parser~new(file)
-  diagnostics = check~run(parser)
+  diagnostics = check~run(.Rexx.Parser~new(file))
 
   if diagnostics~items == expectedCount then do
      say 'ok  'file' ('expectedCount' finding(s))'
@@ -218,7 +248,7 @@ exit main(argLine)
 
   file = dir || fname
   call lineout file, line1
-  if line2 \== '' then call lineout file, line2
+  if line2 ¬== '' then call lineout file, line2
   call stream file, 'c', 'close'
 
   info = .ExtprocDialect~detect(file)
@@ -246,7 +276,7 @@ exit main(argLine)
 
   file = dir || fname
   call lineout file, line1
-  if line2 \== '' then call lineout file, line2
+  if line2 ¬== '' then call lineout file, line2
   call stream file, 'c', 'close'
 
   info = .ExtprocDialect~detect(file)
@@ -329,7 +359,7 @@ exit main(argLine)
   diagnostics = .BifSignature~new~run(parser)
   call sysfiledelete file
 
-  if source \== .Nil, plain == .Nil, diagnostics~items == 1 then do
+  if source ¬== .Nil, plain == .Nil, diagnostics~items == 1 then do
      say 'ok  'label
      return 0
   end

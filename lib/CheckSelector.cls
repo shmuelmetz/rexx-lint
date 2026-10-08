@@ -16,10 +16,10 @@
 ::method select class
   use strict arg allChecks, onlyList, disableList, configPath
 
-  if onlyList \== '' then
+  if onlyList ¬== '' then
      return self~checksNamedIn(allChecks, self~splitNames(onlyList))
 
-  if disableList \== '' then
+  if disableList ¬== '' then
      return self~checksNotNamedIn(allChecks, self~splitNames(disableList))
 
   effectiveConfigPath = configPath
@@ -28,7 +28,7 @@
         effectiveConfigPath = '.rexxlintrc'
   end
 
-  if effectiveConfigPath \== '' then
+  if effectiveConfigPath ¬== '' then
      return self~checksNamedIn(allChecks, self~readConfigNames(effectiveConfigPath))
 
   return allChecks
@@ -39,7 +39,7 @@
   names = .Array~new
   do piece over commaList~makeArray(',')
      trimmed = piece~strip
-     if trimmed \== '' then names~append(trimmed)
+     if trimmed ¬== '' then names~append(trimmed)
   end
   return names
 
@@ -82,6 +82,6 @@
            leave
         end
      end
-     if \excluded then selected~append(check)
+     if ¬excluded then selected~append(check)
   end
   return selected

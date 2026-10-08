@@ -59,7 +59,7 @@
      if element < .EL.SIMPLE_VARIABLE | element < .EL.EXPOSED_SIMPLE_VARIABLE then do
         matched = self~matchedWord(element~value, words)
         if matched <> .Nil then do
-           if first~hasIndex(matched) = .False then do
+           if ¬first~hasIndex(matched) then do
               first[matched] = element
               uses[matched] = 0
               order~append(matched)

@@ -23,16 +23,15 @@
 
   found = .Directory~new
   order = .Array~new
-  previous = .Nil
+  /* The first element is always an end of clause, never part of ~~. */
   element = parser~firstElement
+  previous = element
   loop until element == .Nil
      kind = ''
      select
-        /* ~~ arrives as two elements; count it once. */
+        /* ~~ arrives as two elements; count it once, at the first. */
         when element < .EL.OP.CASCADING_MESSAGE then
-           if previous == .Nil then kind = 'cascading message operator'
-           else if (previous < .EL.OP.CASCADING_MESSAGE) = .False then
-              kind = 'cascading message operator'
+           if ¬(previous < .EL.OP.CASCADING_MESSAGE) then kind = 'cascading message operator'
         when element < .EL.OP.MESSAGE then kind = 'message operator'
         when element < .EL.LEFT_BRACKET then kind = 'bracket'
         when element < .EL.DIRECTIVE_START then kind = 'directive'

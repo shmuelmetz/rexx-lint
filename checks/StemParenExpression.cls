@@ -38,9 +38,9 @@
   element = parser~firstElement
   loop until element == .Nil
      if element < .EL.TAKEN_CONSTANT then do
-        value = element~value
-        if value~right(1) == '.' then
-           diagnostics~append(self~makeDiagnostic(element, value))
+        text = element~value
+        if text~right(1) == '.' then
+           diagnostics~append(self~makeDiagnostic(element, text))
      end
      element = element~next
   end
@@ -48,12 +48,12 @@
   return diagnostics
 
 ::method makeDiagnostic private
-  use strict arg element, value
+  use strict arg element, text
 
   parse value element~from with lineNum colNum
 
-  msg = "'"value"(...)' calls a routine literally named '"value"',"  ,
+  msg = "'"text"(...)' calls a routine literally named '"text"',"  ,
         || " it does not access a compound variable's tail --" ,
-        || " set a variable to the tail first and use "value"var;" ,
-        || " in ooRexx, "value"[expr] also works"
+        || " set a variable to the tail first and use "text"var;" ,
+        || " in ooRexx, "text"[expr] also works"
   return .Diagnostic~new(lineNum, colNum, msg, self~name)

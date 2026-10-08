@@ -116,6 +116,25 @@ The dialect then decides which checks run:
   escapes in string literals.
 - Every other check runs for every dialect.
 
+The dialect also sets the Rexx Parser's mode (`lib/DialectParser.cls`):
+`zvm`, `tso` and `omvs` files are parsed in its CMS mode, and `executor`
+files in its Executor mode; every other dialect uses the default (ooRexx)
+mode. Those modes accept the NOT spellings the dialects allow beyond
+ooRexx's backslash, `'AA'x` and `'AC'x`: the slash in `/=` and `/==`, and
+the NOT sign U+00AC encoded in UTF-8, plus, for Executor, the circumflex
+(`^=`, `^>`, ...). CMS mode rejects ooRexx syntax, so a file that fails to
+parse in its dialect's mode is parsed again in the default mode, where
+`dialect-mismatch` can report the ooRexx constructs; only if that also
+fails is the file reported as unparseable, with the error from its own
+dialect's mode.
+
+**EBCDIC is not supported.** rexx-lint and the Rexx Parser read source
+only in an ASCII-based code page, such as ISO-8859-*, UTF-8 or code page
+850. EBCDIC is not ASCII-based; nearly every character has a different
+code. A z/VM, TSO/E or z/OS data set must be converted to an ASCII-based
+code page before it is linted. The code translation must convert the
+logical NOT to `'AA'x` or `'AC'x`.
+
 ## Checks (implemented)
 
 - **`shadowed-special-vars`** -- flags any assignment-like use of `RESULT`,
@@ -174,6 +193,17 @@ The dialect then decides which checks run:
   stopping at the first. Only constants are type-checked, and BIFs with
   special argument rules (`D2C`, `MAX`, `STREAM`, the stream-I/O family,
   ...) get only the count and omitted-argument checks.
+- **`boolean-comparison`** -- flags a boolean compared with a constant:
+  `if flag = .false`, `if abbrev(a, b) = 0`, `if s~hasIndex(k) = 1`,
+  `if (a > b) = '1'`. A boolean is already a condition; use it, or its
+  negation with the NOT operator, directly. Any
+  comparison with `.true` or `.false` is flagged; one with 0 or 1 only when
+  the other side is known to be boolean (ABBREV, two-argument DATATYPE,
+  RexxUtil's SysFileExists and SysIsFile family, methods such as
+  `hasIndex`, `isEmpty` and `startsWith`, or a parenthesized comparison).
+  A variable or numeric expression compared with 0 or 1 (a count, a
+  position, a return code) is not flagged, and neither is a USE ARG
+  default.
 
 ## Checks (planned)
 
@@ -193,6 +223,12 @@ rights -- local-only, never committed.)
 ## Platform
 
 Developed on ArcaOS; Linux compatibility is a requirement from the start. Targets submission to RexxLA.
+
+The Rexx sources are Latin-1 (ISO 8859-1), declared in `.editorconfig`:
+the logical-NOT operator is written as the NOT sign (U+00AC), which is
+byte `'AC'x` in Latin-1, not as
+a backslash. ooRexx reads source as single bytes, so it cannot take UTF-8
+here; set your editor to Latin-1 for `*.rex` and `*.cls`.
 
 ## Collaboration
 
