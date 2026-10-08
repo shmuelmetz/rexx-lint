@@ -18,3 +18,13 @@
 
 ::method format
   return self~line':'self~column': 'self~severity': 'self~message' ['self~check']'
+
+/* DiagnosticOrder -- comparator for sorting diagnostics by line, then
+ * column, then check name. */
+::class DiagnosticOrder public inherit Comparator
+
+::method compare
+  use strict arg left, right
+  if left~line <> right~line then return sign(left~line - right~line)
+  if left~column <> right~column then return sign(left~column - right~column)
+  return left~check~compareTo(right~check)

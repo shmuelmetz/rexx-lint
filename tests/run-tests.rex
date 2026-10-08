@@ -29,7 +29,7 @@ exit main(argLine)
   failures = 0
   failures = failures + assertFindingCount(here'fixtures/shadowed-vars-bad.rex', .ShadowedSpecialVars~new, 2)
   failures = failures + assertFindingCount(here'fixtures/shadowed-vars-good.rex', .ShadowedSpecialVars~new, 0)
-  failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-bad.rex', .KeywordAsVariable~new, 4)
+  failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-bad.rex', .KeywordAsVariable~new, 2)
   failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-good.rex', .KeywordAsVariable~new, 0)
   failures = failures + assertFindingCount(here'fixtures/signal-control-flow-bad.rex', .SignalControlFlow~new, 2)
   failures = failures + assertFindingCount(here'fixtures/signal-control-flow-good.rex', .SignalControlFlow~new, 0)
@@ -133,6 +133,9 @@ exit main(argLine)
      x2c('EFBBBF') || 'extproc perl -STw', '', ,
      'perl', '', .True, 'extproc', ,
      'UTF-8 BOM before extproc perl -- BOM ignored')
+  failures = failures + assertUnsupported(extprocDir, 'nodot', ,
+     '/* plain */', 'say 1', '', 'none', ,
+     'file name with no extension at all -- no crash')
   failures = failures + assertUnsupported(extprocDir, 'plain.rexx.tmp', ,
      '/* plain */', 'say 1', '', 'none', ,
      'plain Rexx file -- not flagged')

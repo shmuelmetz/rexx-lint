@@ -179,16 +179,20 @@ exit main(argLine)
      say file':'.Diagnostic~new(1, 1, bomMsg, 'utf8-bom')~format
      findingCount = findingCount + 1
   end
+  found = .Array~new
   do check over checks
      /* A check with an appliesTo method decides for itself whether it
       * applies to this file's dialect; a check without one always does. */
      if check~hasMethod('APPLIESTO') then
         if check~appliesTo(dialect, explicit) = .False then iterate
-     diagnostics = check~run(parser)
-     do d over diagnostics
-        say file':'d~format
-        findingCount = findingCount + 1
-     end
+     found~appendAll(check~run(parser))
+  end
+
+  /* Report in source order, not grouped by check. */
+  found = found~sortWith(.DiagnosticOrder~new)
+  do d over found
+     say file':'d~format
+     findingCount = findingCount + 1
   end
 
   return findingCount

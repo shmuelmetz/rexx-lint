@@ -47,19 +47,33 @@
 ::method run
   use strict arg parser
 
-  diagnostics = .Array~new
   words = self~class~watchedWords
 
+  /* One finding per variable, at its first use, with the number of
+   * uses; reporting every use buried the file in repeats. */
+  first = .Directory~new
+  uses = .Directory~new
+  order = .Array~new
   element = parser~firstElement
   loop until element == .Nil
      if element < .EL.SIMPLE_VARIABLE | element < .EL.EXPOSED_SIMPLE_VARIABLE then do
         matched = self~matchedWord(element~value, words)
-        if matched \== .Nil then
-           diagnostics~append(self~makeDiagnostic(element, matched))
+        if matched <> .Nil then do
+           if first~hasEntry(matched) = .False then do
+              first[matched] = element
+              uses[matched] = 0
+              order~append(matched)
+           end
+           uses[matched] = uses[matched] + 1
+        end
      end
      element = element~next
   end
 
+  diagnostics = .Array~new
+  do word over order
+     diagnostics~append(self~makeDiagnostic(first[word], word, uses[word]))
+  end
   return diagnostics
 
 ::method matchedWord private
@@ -72,9 +86,10 @@
   return .Nil
 
 ::method makeDiagnostic private
-  use strict arg element, word
+  use strict arg element, word, count
 
   parse value element~from with lineNum colNum
 
   msg = "variable '"word"' is also a Rexx keyword; consider a less ambiguous name"
+  if count > 1 then msg = msg '('count 'uses)'
   return .Diagnostic~new(lineNum, colNum, msg, self~name)

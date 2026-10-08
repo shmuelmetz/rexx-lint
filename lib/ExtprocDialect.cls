@@ -133,8 +133,11 @@
   end
 
   if interpreter == '' then do
-     ext = file~substr(file~lastPos('.'))~lower
-     if file~lastPos('.') > 0, wordPos(ext, '.crexx .crx') > 0 then do
+     /* No dot at all means no extension (substr would reject position 0). */
+     dot = file~lastPos('.')
+     ext = ''
+     if dot > 0 then ext = file~substr(dot)~lower
+     if wordPos(ext, '.crexx .crx') > 0 then do
         info~put('cREXX',     'UNSUPPORTED')
         info~put('extension', 'SOURCE')
      end
