@@ -2,8 +2,8 @@
  * that looks like a C/Python/JS-style escape sequence (\n, \t, \\,
  * \", etc.).
  *
- * Rexx has no escape-sequence mechanism in string literals at all,
- * in any dialect. A backslash inside a string is just a literal
+ * No Rexx dialect except NetRexx has backslash escapes in string
+ * literals. A backslash inside a string is just a literal
  * backslash character -- verified directly against the parser: the
  * EL.STRING element's ~value for "hello\nworld" is the ten-character
  * string h-e-l-l-o-\-n-w-o-r-l-d, not a string containing a real
@@ -211,6 +211,6 @@
   parse value element~from with lineNum colNum
 
   msg = "'"sequence"' inside a string literal is two literal characters" ,
-        || " in Rexx, not an escape sequence -- there is no string-escape" ,
-        || " mechanism in any Rexx dialect"
+        || " in Rexx, not an escape sequence -- no Rexx dialect except" ,
+        || " NetRexx has backslash escapes in string literals"
   return .Diagnostic~new(lineNum, colNum, msg, self~name)

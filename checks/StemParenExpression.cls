@@ -15,10 +15,12 @@
  * computed stem access: three forms", where this was found as a real
  * recurring bug in this project's own scripts.
  *
- * The correct forms are `stem.[expr]` (indirect tail on a classic
- * compound variable) or, in ooRexx, a real collection object with
- * bracket notation (`stem[expr]`) -- this check flags the mistake but
- * does not attempt to guess which correction the author needs.
+ * Classic Rexx has no indirect-tail syntax: the idiom is to set a
+ * variable first and use it as the tail (`i = expr; stem.i`). In ooRexx
+ * only, `stem.[expr]` builds the tail from an expression, and a real
+ * collection object with bracket notation is another option -- this
+ * check flags the mistake but does not guess which correction the
+ * author needs.
  */
 
 ::requires 'Diagnostic.cls'
@@ -52,5 +54,6 @@
 
   msg = "'"value"(...)' calls a routine literally named '"value"',"  ,
         || " it does not access a compound variable's tail --" ,
-        || " use "value"[expr] (indirect tail) or a real collection object"
+        || " set a variable to the tail first and use "value"var;" ,
+        || " in ooRexx, "value"[expr] also works"
   return .Diagnostic~new(lineNum, colNum, msg, self~name)
