@@ -45,8 +45,10 @@
  *
  * Exit codes: 0 = clean, 1 = at least one finding, 2 = no files given
  * (usage error), 3 = at least one file could not be parsed at all
- * (invalid Rexx, or not Rexx source). A file that fails to parse is
- * reported and skipped -- it does not abort the rest of the run.
+ * (invalid Rexx, not Rexx source, or not found), 4 = rexx-lint itself
+ * hit an internal error (a bug in a check or in rexx-lint). A file that
+ * fails to parse, and a check that fails on one file, are reported and
+ * skipped -- neither aborts the rest of the run.
  *
  * Requires the Rexx Parser (Josep Maria Blasco,
  * https://github.com/JosepMariaBlasco/rexx-parser) to be reachable
@@ -55,7 +57,16 @@
  */
 
 parse arg argLine
+signal on syntax name InternalError
 exit main(argLine)
+
+/* Anything not trapped closer to the problem: report it, don't dump a
+ * raw traceback. Exit code 4 means rexx-lint itself failed. */
+InternalError:
+  cond = condition('O')
+  say 'rexx-lint: internal error:' cond~message ,
+      '(line' cond~position 'of' filespec('name', cond~program)')'
+  exit 4
 
 ::requires 'Rexx.Parser.cls'
 ::requires 'Diagnostic.cls'
@@ -111,14 +122,24 @@ exit main(argLine)
   checks = .CheckSelector~select(allChecks, onlyList, disableList, configPath)
 
   totalFindings = 0
+  .local~rexxlint.internalErrors = 0
   parseFailures = 0
   do file over files
+     if .File~new(file)~isFile = .False then do
+        say file': not found -- skipped'
+        parseFailures = parseFailures + 1
+        iterate
+     end
      fileDialect = dialect
      /* Explicit: named by --dialect or by the file's own extproc/shebang,
       * as opposed to the oorexx fallback for a file that names nothing. */
      explicit = dialectGiven
      if \dialectGiven then do
-        info = .ExtprocDialect~detect(file)
+        info = detectDialect(file)
+        if info == .Nil then do
+           parseFailures = parseFailures + 1
+           iterate
+        end
         if info~at('ISNONREXX') then do
            say file': not Rexx (' || info~at('SOURCE') || " routes to '" ,
                || info~at('INTERPRETER') || "') -- skipped"
@@ -141,6 +162,7 @@ exit main(argLine)
      else totalFindings = totalFindings + result
   end
 
+  if .local~rexxlint.internalErrors > 0 then return 4
   if parseFailures > 0 then return 3
   if totalFindings > 0 then return 1
   return 0
@@ -185,7 +207,7 @@ exit main(argLine)
       * applies to this file's dialect; a check without one always does. */
      if check~hasMethod('APPLIESTO') then
         if check~appliesTo(dialect, explicit) = .False then iterate
-     found~appendAll(check~run(parser))
+     found~appendAll(runCheck(check, parser, file))
   end
 
   /* Report in source order, not grouped by check. */
@@ -201,3 +223,34 @@ ParseFailed:
   cond = condition('O')
   say file': could not parse ('cond~message')'
   return -1
+
+/* detectDialect -- .ExtprocDialect~detect with a trap: a file it cannot
+ * read or make sense of is reported and skipped (returns .Nil). */
+::routine detectDialect
+  use strict arg file
+
+  signal on syntax name DetectFailed
+  signal on notready name DetectFailed
+  return .ExtprocDialect~detect(file)
+
+DetectFailed:
+  cond = condition('O')
+  say file': could not read the first lines to detect the dialect ('cond~message')'
+  return .Nil
+
+/* runCheck -- run one check on one parsed file. An error inside the check
+ * is a rexx-lint bug, not a problem with the file: report it as such and
+ * let the remaining checks run (returns no findings for this check). */
+::routine runCheck
+  use strict arg check, parser, file
+
+  signal on syntax name CheckFailed
+  return check~run(parser)
+
+CheckFailed:
+  cond = condition('O')
+  say file': internal error in check' check~name':' cond~message ,
+      '(line' cond~position 'of' filespec('name', cond~program)') -- check skipped'
+  .local~rexxlint.internalErrors = .local~rexxlint.internalErrors + 1
+  return .Array~new
+
