@@ -116,16 +116,17 @@ routinely has files that aren't Rexx at all alongside ones that are:
   flagged, since it preserves the stack regardless of form.
 - **`backslash-escape`** -- flags a backslash inside a string literal
   followed by a letter that looks like a C/Python/JS-style escape code
-  (`\n`, `\t`, `\\`, etc.). Rexx has no string-escape mechanism in any
-  dialect; a backslash in a string is always two literal characters, not
+  (`\n`, `\t`, `\\`, etc.). No Rexx dialect except NetRexx has backslash
+  escapes in string literals; elsewhere a backslash in a string is always two literal characters, not
   an escape sequence -- a silent, easy-to-miss bug for anyone coming from
   a language where it is one.
 - **`stem-paren-expression`** -- flags `stem.(expression)`, the classic
   mistaken attempt at indirect/computed stem-tail access. It isn't that in
   any dialect; it calls a routine literally named `STEM.` (trailing dot
   included), which either fails outright or silently calls the wrong
-  thing. The correct forms are `stem.[expr]` (classic indirect tail) or a
-  real collection object.
+  thing. Classic Rexx has no indirect-tail syntax:
+  set a variable first and use `stem.var`. In ooRexx only, `stem.[expr]`
+  works, or use a real collection object.
 - **`stem-count-loop`** -- flags `DO var = ... TO stem.0` (and the `LOOP`
   synonym), a manually-counted stem simulating an array. Superseded by
   `.Array` with `do over` -- except when the stem was populated by
