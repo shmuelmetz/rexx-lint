@@ -39,6 +39,15 @@
 
 ::class NestedBuiltinCall public
 
+/* appliesTo -- the advice (methods, .Array, DO OVER) is ooRexx only, so
+ * this check runs only when the dialect is ooRexx or Executor and was
+ * named explicitly (--dialect, or the file's own extproc/shebang), not
+ * for the oorexx fallback used when a file names no interpreter. */
+::method appliesTo
+  use strict arg dialect, explicit
+  if explicit = .False then return .False
+  return 'oorexx executor'~caselessWordPos(dialect) > 0
+
 ::method name
   return 'nested-builtin-call'
 

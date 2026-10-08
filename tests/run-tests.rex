@@ -142,6 +142,15 @@ exit main(argLine)
 
   failures = failures + assertKnownArgTypes()
 
+  /* Dialect applicability: appliesTo(dialect, explicit). */
+  failures = failures + assertApplies(.NestedBuiltinCall~new, 'oorexx', .True, .True)
+  failures = failures + assertApplies(.NestedBuiltinCall~new, 'oorexx', .False, .False)
+  failures = failures + assertApplies(.NestedBuiltinCall~new, 'regina', .True, .False)
+  failures = failures + assertApplies(.StemCountLoop~new, 'executor', .True, .True)
+  failures = failures + assertApplies(.StemCountLoop~new, 'tso', .True, .False)
+  failures = failures + assertApplies(.BackslashEscape~new, 'netrexx', .True, .False)
+  failures = failures + assertApplies(.BackslashEscape~new, 'oorexx', .False, .True)
+
   if failures == 0 then do
      say 'All tests passed.'
      return 0
@@ -262,6 +271,17 @@ exit main(argLine)
   end
 
   say 'FAIL parser argument types unknown to bif-signature:' unknown~allItems~sort~makeString('L', ' ')
+  return 1
+
+::routine assertApplies
+  use strict arg check, dialect, explicit, expected
+
+  label = check~name 'for' dialect '(explicit='explicit')'
+  if check~appliesTo(dialect, explicit) = expected then do
+     say 'ok  'label' -> 'expected
+     return 0
+  end
+  say 'FAIL 'label': expected 'expected
   return 1
 
 ::routine assertBomLint

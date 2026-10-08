@@ -4,9 +4,9 @@
  *   rexx rexx-lint.rex [options] file.rex [file2.rex ...]
  *
  * Options:
- *   --dialect=DIALECT   Target dialect for every file given (accepted,
- *                       not yet used to vary check behavior -- see
- *                       README.md's "Dialect support" section).
+ *   --dialect=DIALECT   Target dialect for every file given. Checks
+ *                       whose advice holds only in some dialects run
+ *                       only there (see README.md, "Dialect support").
  *                       Without this flag, each file's OWN extproc or
  *                       shebang line is consulted instead (see
  *                       lib/ExtprocDialect.cls): a file that plainly
@@ -114,6 +114,9 @@ exit main(argLine)
   parseFailures = 0
   do file over files
      fileDialect = dialect
+     /* Explicit: named by --dialect or by the file's own extproc/shebang,
+      * as opposed to the oorexx fallback for a file that names nothing. */
+     explicit = dialectGiven
      if \dialectGiven then do
         info = .ExtprocDialect~detect(file)
         if info~at('ISNONREXX') then do
@@ -130,9 +133,10 @@ exit main(argLine)
            iterate
         end
         fileDialect = info~at('DIALECT')
+        explicit = fileDialect <> ''
         if fileDialect == '' then fileDialect = 'oorexx'
      end
-     result = lintFile(file, fileDialect, checks)
+     result = lintFile(file, fileDialect, explicit, checks)
      if result < 0 then parseFailures = parseFailures + 1
      else totalFindings = totalFindings + result
   end
@@ -154,7 +158,7 @@ exit main(argLine)
  * is caught within this one file's processing and never reaches
  * main's loop -- the next file is still attempted. */
 ::routine lintFile
-  use strict arg file, dialect, checks
+  use strict arg file, dialect, explicit, checks
 
   signal on syntax name ParseFailed
 
@@ -176,6 +180,10 @@ exit main(argLine)
      findingCount = findingCount + 1
   end
   do check over checks
+     /* A check with an appliesTo method decides for itself whether it
+      * applies to this file's dialect; a check without one always does. */
+     if check~hasMethod('APPLIESTO') then
+        if check~appliesTo(dialect, explicit) = .False then iterate
      diagnostics = check~run(parser)
      do d over diagnostics
         say file':'d~format

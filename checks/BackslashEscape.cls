@@ -84,6 +84,12 @@
    * doubled quotes to puzzle over here. */
   return 'ntr0abfvxu' || '\' || '"' || "'"
 
+/* appliesTo -- NetRexx does have backslash escapes in string literals,
+ * so this check does not run for it. */
+::method appliesTo
+  use strict arg dialect, explicit
+  return dialect~caselessEquals('netrexx') = .False
+
 ::method name
   return 'backslash-escape'
 
