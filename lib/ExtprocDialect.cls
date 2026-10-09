@@ -87,11 +87,11 @@
  *                cannot read (named by its extproc/shebang interpreter
  *                or, failing that, its .crexx/.crx extension), else ''
  *   SOURCE       'extproc', 'shebang', 'extension', 'batch', or 'none'
- * A .cmd file with no extproc line whose first line does not begin with
- * a comment is a batch file: OS/2's CMD.EXE runs a .cmd file as Rexx
- * only when it begins with a comment. It is reported as ISNONREXX, with
- * SOURCE 'batch' and INTERPRETER 'CMD.EXE'. Leading blanks before the
- * comment are allowed here, so a doubtful file is still parsed.
+ * A .cmd file with no extproc line that does not begin with a comment in
+ * line one, column one, is a batch file: an OS/2 REXX procedure must start
+ * with a comment there, which is what distinguishes it from a batch file
+ * (OS/2 Procedures Language 2/REXX, "Writing a REXX Procedure"). It is
+ * reported as ISNONREXX, with SOURCE 'batch' and INTERPRETER 'CMD.EXE'.
  * Never raises on a missing/unreadable file -- returns the all-empty
  * default instead, since the caller's own parse attempt is what
  * actually needs to handle that case. */
@@ -147,7 +147,7 @@
         info~put('extension', 'SOURCE')
      end
      if ext == '.cmd', lines~items > 0 then
-        if lines[1]~strip('L')~left(2) <> '/*' then do
+        if lines[1]~left(2) <> '/*' then do
            info~put(.True,     'ISNONREXX')
            info~put('batch',   'SOURCE')
            info~put('CMD.EXE', 'INTERPRETER')

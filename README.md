@@ -72,11 +72,12 @@ routinely has files that aren't Rexx at all alongside ones that are:
   (`perl`, `python`, a POSIX shell, ...) is reported and skipped before it
   ever reaches the parser -- same outcome as a genuine parse failure (exit
   code 3), but with a clear reason instead of a raw parser error.
-- A `.cmd` file with no `extproc` line whose first line does not begin
-  with a comment is a batch file, not Rexx: OS/2's CMD.EXE runs a `.cmd`
-  file as Rexx only when it begins with a comment. It is reported as
-  "not Rexx (a batch file ...)" and skipped (exit code 3). Blanks before
-  the opening `/*` are allowed, so a doubtful file is still parsed.
+- A `.cmd` file with no `extproc` line that does not begin with a
+  comment in line one, column one, is a batch file, not Rexx: an OS/2 REXX
+  procedure must start with a comment there, which is what distinguishes
+  it from a batch file (*OS/2 Procedures Language 2/REXX*, "Writing a REXX
+  Procedure"). It is reported as "not Rexx (a batch file ...)" and skipped
+  (exit code 3).
 - A cREXX source -- its `extproc`/shebang names a cREXX tool (`crexx`,
   `rxc`, `rxvm`, `rexxscript`, ...), or, with neither line, it has a `.crexx` or
   `.crx` extension -- is reported as unsupported and skipped (exit code 3).

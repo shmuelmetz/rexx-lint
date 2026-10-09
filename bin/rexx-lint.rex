@@ -147,7 +147,8 @@ InternalError:
         end
         if info~at('ISNONREXX') then do
            if info~at('SOURCE') == 'batch' then
-              say file': not Rexx (a batch file: its first line is not a comment) -- skipped'
+              say file': not Rexx (a batch file: it does not begin with a comment' ,
+                  'in line one, column one) -- skipped'
            else
               say file': not Rexx (' || info~at('SOURCE') || " routes to '" ,
                   || info~at('INTERPRETER') || "') -- skipped"

@@ -142,8 +142,8 @@ exit main(argLine)
      '.cmd that begins with a comment -- Rexx')
   failures = failures + assertDetect(extprocDir, 'batch-indented.cmd', ,
      '  /* REXX */', 'say 1', ,
-     '', '', .False, 'none', ,
-     '.cmd with blanks before the opening comment -- still parsed')
+     'CMD.EXE', '', .True, 'batch', ,
+     '.cmd with blanks before the opening comment -- a batch file (column one)')
   failures = failures + assertDetect(extprocDir, 'batch-perl.cmd', ,
      'extproc perl -Sx', '', ,
      'perl', '', .True, 'extproc', ,
