@@ -132,6 +132,26 @@ exit main(argLine)
      '/* just a comment */', 'say "hi"', ,
      '', '', .False, 'none', ,
      'no extproc/shebang at all -- true of every genuine Rexx file seen')
+  failures = failures + assertDetect(extprocDir, 'batch.cmd', ,
+     'ECHO ON', 'SETLOCAL', ,
+     'CMD.EXE', '', .True, 'batch', ,
+     '.cmd whose first line is not a comment -- an OS/2 batch file')
+  failures = failures + assertDetect(extprocDir, 'batch-rexx.cmd', ,
+     '/* REXX */', 'say 1', ,
+     '', '', .False, 'none', ,
+     '.cmd that begins with a comment -- Rexx')
+  failures = failures + assertDetect(extprocDir, 'batch-indented.cmd', ,
+     '  /* REXX */', 'say 1', ,
+     '', '', .False, 'none', ,
+     '.cmd with blanks before the opening comment -- still parsed')
+  failures = failures + assertDetect(extprocDir, 'batch-perl.cmd', ,
+     'extproc perl -Sx', '', ,
+     'perl', '', .True, 'extproc', ,
+     '.cmd with extproc perl -- the extproc decides, not the batch rule')
+  failures = failures + assertDetect(extprocDir, 'not-batch.rex', ,
+     'say 1', '', ,
+     '', '', .False, 'none', ,
+     '.rex with no comment -- the batch rule is for .cmd only')
 
   failures = failures + assertUnsupported(extprocDir, 'crexx-shebang.tmp', ,
      '#!/usr/bin/env crexx', '', 'cREXX', 'shebang', ,

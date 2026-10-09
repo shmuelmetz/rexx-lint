@@ -86,7 +86,12 @@
  *   UNSUPPORTED  'cREXX' if the file is a cREXX source the Rexx Parser
  *                cannot read (named by its extproc/shebang interpreter
  *                or, failing that, its .crexx/.crx extension), else ''
- *   SOURCE       'extproc', 'shebang', 'extension', or 'none'
+ *   SOURCE       'extproc', 'shebang', 'extension', 'batch', or 'none'
+ * A .cmd file with no extproc line whose first line does not begin with
+ * a comment is a batch file: OS/2's CMD.EXE runs a .cmd file as Rexx
+ * only when it begins with a comment. It is reported as ISNONREXX, with
+ * SOURCE 'batch' and INTERPRETER 'CMD.EXE'. Leading blanks before the
+ * comment are allowed here, so a doubtful file is still parsed.
  * Never raises on a missing/unreadable file -- returns the all-empty
  * default instead, since the caller's own parse attempt is what
  * actually needs to handle that case. */
@@ -141,6 +146,12 @@
         info~put('cREXX',     'UNSUPPORTED')
         info~put('extension', 'SOURCE')
      end
+     if ext == '.cmd', lines~items > 0 then
+        if lines[1]~strip('L')~left(2) <> '/*' then do
+           info~put(.True,     'ISNONREXX')
+           info~put('batch',   'SOURCE')
+           info~put('CMD.EXE', 'INTERPRETER')
+        end
      return info
   end
 

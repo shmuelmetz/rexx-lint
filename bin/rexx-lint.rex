@@ -146,8 +146,11 @@ InternalError:
            iterate
         end
         if info~at('ISNONREXX') then do
-           say file': not Rexx (' || info~at('SOURCE') || " routes to '" ,
-               || info~at('INTERPRETER') || "') -- skipped"
+           if info~at('SOURCE') == 'batch' then
+              say file': not Rexx (a batch file: its first line is not a comment) -- skipped'
+           else
+              say file': not Rexx (' || info~at('SOURCE') || " routes to '" ,
+                  || info~at('INTERPRETER') || "') -- skipped"
            parseFailures = parseFailures + 1
            iterate
         end
