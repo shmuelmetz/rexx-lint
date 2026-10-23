@@ -61,8 +61,8 @@ starting with `#` are ignored.
 ## Dialect support
 
 The `--dialect` option selects the target dialect for every file passed on
-that run: `classic`, `oorexx`, `regina`, `zvm`, `omvs`, `tso`, `netrexx`,
-`executor`.
+that run: `classic`, `oorexx`, `orexx` (IBM Object REXX on OS/2 and
+ArcaOS), `regina`, `zvm`, `omvs`, `tso`, `netrexx`, `executor`.
 
 Without `--dialect`, each file's own `extproc`/shebang line is consulted
 instead (see `lib/ExtprocDialect.cls`), since a mixed real-world collection
@@ -84,12 +84,20 @@ routinely has files that aren't Rexx at all alongside ones that are:
   cREXX Level B is a typed Rexx-family language the Rexx Parser cannot read,
   and the "rexx" in `crexx`/`rexxscript` would otherwise fall through to the
   `oorexx` fallback below. `options levelb` in the body is not consulted.
+- An OS/2 `extproc` line in line one is blanked before parsing: CMD.EXE
+  reads it, and the REXX procedure's opening comment follows it, but it is
+  not Rexx. Blanking rather than deleting keeps the line numbers.
 - A leading UTF-8 byte-order mark is stripped so linting can continue (the
   Rexx Parser rejects it as an invalid character), but never silently: it is
   reported as a `utf8-bom` finding at 1:1. Interpreters may reject a BOM
   (e.g., ooRexx 5.2, which gave Error 13.1 in every case tried: before a
   comment, code, or a shebang) or miss a first-line comment, `extproc` or
   shebang that must start at byte 1, so it cannot be treated as harmless.
+  No supported dialect accepts one: OREXX does not support Unicode source,
+  and Executor, for all its Unicode work, reads source the way ooRexx does
+  (its scanner treats 'EF'x as an invalid character, Error 13.1; it
+  neutralizes only a leading `#!`). The warning is therefore given in
+  every dialect.
   UTF-16/32 files are not handled.
 - A file naming a recognized Rexx interpreter (`regina`, ...) gets that
   dialect. A file naming an *unrecognized* interpreter whose name still
@@ -111,11 +119,12 @@ routinely has files that aren't Rexx at all alongside ones that are:
 
 The dialect then decides which checks run:
 
-- `nested-builtin-call` and `stem-count-loop` give ooRexx-only advice
-  (chained methods, `.Array` with `DO OVER`), so they run only when the
-  dialect is `oorexx` or `executor`: named by `--dialect` or by the file's
-  own `extproc`/shebang, or inferred from ooRexx syntax in the code. Not
-  for a file that names nothing and uses only classic Rexx.
+- `nested-builtin-call` gives object-oriented advice (chained string
+  methods), so it runs only when the dialect is `oorexx`, `orexx`,
+  `executor` or `netrexx`: named by `--dialect` or by the file's own `extproc`/shebang,
+  or inferred from ooRexx syntax in the code. `stem-count-loop` (`.Array`
+  with `DO OVER`) runs the same way for `oorexx` and `executor`. Neither
+  runs for a file that names nothing and uses only classic Rexx.
 - `dialect-mismatch` runs only for a file explicitly marked `classic`,
   `regina`, `zvm`, `omvs` or `tso`.
 - `backslash-escape` does not run for `netrexx`, which does have backslash
@@ -180,10 +189,17 @@ logical NOT to `'AA'x` or `'AC'x`.
   own docstring. ooRexx only (see "Dialect support").
 - **`nested-builtin-call`** -- flags a built-in function call whose first
   argument is itself an immediate built-in call (`translate(strip(x))`),
-  as a candidate for ooRexx chained-method style (`x~strip~translate`).
+  as a candidate for chained-method style (`x~strip~translate`). The outer
+  function must be a String method in the target dialect -- for ooRexx and
+  Executor, as the running interpreter reports; for OREXX, the String
+  class's methods in its reference (REXX.INF), which has no `LOWER` or
+  `UPPER`; for NetRexx, the REXX class's built-in methods (NetRexx 4.02
+  Language Reference). The inner call need not be one: `strip(linein(f))`
+  becomes `linein(f)~strip`, while `linein(strip(f))` is not flagged.
+  For NetRexx the advice is in its own notation (`x.strip.translate`).
   Deliberately narrow: only the immediately-nested case is flagged, not a
-  nested call as a later argument or more than one level deep. ooRexx only
-  (see "Dialect support").
+  nested call as a later argument or more than one level deep. ooRexx,
+  OREXX, Executor and NetRexx only (see "Dialect support").
 - **`dialect-mismatch`** -- flags ooRexx-only syntax (`~`, `~~`, `[ ]`,
   `::` directives) in a file explicitly marked as a non-ooRexx dialect,
   where it will not run. Environment symbols are not flagged there: in

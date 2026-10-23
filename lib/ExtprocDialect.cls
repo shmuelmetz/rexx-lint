@@ -209,6 +209,34 @@ NoBom:
   if str ¬== .Nil then str~close
   return .Nil
 
+/* sourceForParser -- the file's lines ready for .Rexx.Parser~new(file,
+ * source), or .Nil for "let the parser load the file itself". A leading
+ * UTF-8 byte-order mark is removed (the parser rejects it), and an OS/2
+ * EXTPROC line in line one is blanked: CMD.EXE reads it and the REXX
+ * procedure's opening comment follows it, but it is not Rexx. Blanking
+ * rather than deleting keeps the line numbers. */
+::method sourceForParser class
+  use strict arg file
+
+  noBom = self~sourceWithoutBom(file)
+  lines = noBom
+  if lines == .Nil then do
+     str = .Nil
+     signal on syntax name Unreadable
+     signal on notready name Unreadable
+     str = .stream~new(file)
+     lines = str~arrayIn
+     str~close
+  end
+  if lines~items > 0 then
+     if lines[1]~strip~word(1)~caselessEquals('extproc') then lines[1] = ''
+     else return noBom
+  return lines
+
+Unreadable:
+  if str ¬== .Nil then str~close
+  return .Nil
+
 ::method firstLines class
   use strict arg file
 

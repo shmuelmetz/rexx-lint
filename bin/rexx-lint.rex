@@ -195,7 +195,8 @@ InternalError:
 
   signal on syntax name ParseFailed
 
-  source = .ExtprocDialect~sourceWithoutBom(file)
+  hasBom = .ExtprocDialect~sourceWithoutBom(file) ¬== .Nil
+  source = .ExtprocDialect~sourceForParser(file)
   /* Parsed in the Rexx Parser mode for the dialect (CMS for z/VM, TSO/E
    * and z/OS UNIX; Executor), whether the dialect came from --dialect or
    * from the file's own extproc/shebang line. */
@@ -223,7 +224,7 @@ InternalError:
    * comment, before code, before a shebang: Error 13.1), and a BOM also
    * hides a first-line comment, extproc or shebang from any interpreter
    * or kernel that expects it at byte 1. So it is reported as a finding. */
-  if source ¬== .Nil then do
+  if hasBom then do
      bomMsg = 'UTF-8 byte-order mark ignored for linting; interpreters may' ,
         || ' reject it (e.g., ooRexx 5.2: Error 13.1) or miss a first-line' ,
         || ' comment, extproc or shebang that must start at byte 1'

@@ -46,6 +46,9 @@ exit main(argLine)
   failures = failures + assertFindingCount(here'fixtures/stem-count-loop-good.rex', .StemCountLoop~new, 0)
   failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-bad.rex', .NestedBuiltinCall~new, 2)
   failures = failures + assertFindingCount(here'fixtures/nested-builtin-call-good.rex', .NestedBuiltinCall~new, 0)
+  failures = failures + assertFindingCountIn(here'fixtures/nested-builtin-call-dialects.rex', .NestedBuiltinCall~new, 'oorexx', 4)
+  failures = failures + assertFindingCountIn(here'fixtures/nested-builtin-call-dialects.rex', .NestedBuiltinCall~new, 'orexx', 3)
+  failures = failures + assertFindingCountIn(here'fixtures/nested-builtin-call-dialects.rex', .NestedBuiltinCall~new, 'netrexx', 4)
   failures = failures + assertFindingCount(here'fixtures/dialect-mismatch-bad.rex', .DialectMismatch~new, 4)
   failures = failures + assertFindingCount(here'fixtures/dialect-mismatch-good.rex', .DialectMismatch~new, 0)
   failures = failures + assertFindingCount(here'fixtures/boolean-comparison-bad.rex', .BooleanComparison~new, 73)
@@ -172,6 +175,15 @@ exit main(argLine)
      x2c('EFBBBF') || 'extproc perl -STw', '', ,
      'perl', '', .True, 'extproc', ,
      'UTF-8 BOM before extproc perl -- BOM ignored')
+  failures = failures + assertParseSource(extprocDir, 'extproc-first.cmd', ,
+     'extproc d:\os2\cmd.exe', '/* REXX */', 'rc = 1', 3, '', 1, ,
+     'EXTPROC in line one is blanked; the rest parses, line numbers kept')
+  failures = failures + assertParseSource(extprocDir, 'bom-extproc.cmd', ,
+     x2c('EFBBBF') || 'EXTPROC REXX', '/* REXX */', 'rc = 1', 3, '', 1, ,
+     'BOM and EXTPROC in line one: both removed')
+  failures = failures + assertParseSource(extprocDir, 'plain.cmd', ,
+     '/* REXX */', 'rc = 1', '', 0, .Nil, 1, ,
+     'no BOM or EXTPROC: the parser loads the file itself')
   failures = failures + assertUnsupported(extprocDir, 'nodot', ,
      '/* plain */', 'say 1', '', 'none', ,
      'file name with no extension at all -- no crash')
@@ -188,6 +200,8 @@ exit main(argLine)
   failures = failures + assertApplies(.NestedBuiltinCall~new, 'oorexx', .True, .True)
   failures = failures + assertApplies(.NestedBuiltinCall~new, 'oorexx', .False, .False)
   failures = failures + assertApplies(.NestedBuiltinCall~new, 'regina', .True, .False)
+  failures = failures + assertApplies(.NestedBuiltinCall~new, 'orexx', .True, .True)
+  failures = failures + assertApplies(.NestedBuiltinCall~new, 'netrexx', .True, .True)
   failures = failures + assertApplies(.StemCountLoop~new, 'executor', .True, .True)
   failures = failures + assertApplies(.StemCountLoop~new, 'tso', .True, .False)
   failures = failures + assertApplies(.BackslashEscape~new, 'netrexx', .True, .False)
@@ -262,11 +276,49 @@ exit main(argLine)
   say 'FAIL 'label': expected ['expectedNamesBlank'], got ['gotNames']'
   return 1
 
+/* assertParseSource -- writes a three-line .cmd file, then checks
+ * ExtprocDialect~sourceForParser: the item count (expectItems, 0 when
+ * .Nil is expected), line one (expectLine1, or .Nil for "no source"),
+ * and that the result parses with expectFindings shadowed-special-vars
+ * findings. */
+::routine assertParseSource
+  use strict arg dir, fname, line1, line2, line3, expectItems, expectLine1, ,
+     expectFindings, label
+
+  file = dir || fname
+  call stream file, 'c', 'open write replace'
+  call lineout file, line1
+  call lineout file, line2
+  if line3 ¬== '' then call lineout file, line3
+  call stream file, 'c', 'close'
+
+  source = .ExtprocDialect~sourceForParser(file)
+  if source == .Nil then do
+     ok = expectLine1 == .Nil
+     parser = .Rexx.Parser~new(file)
+  end
+  else do
+     ok = source~items == expectItems & source[1] == expectLine1
+     parser = .Rexx.Parser~new(file, source)
+  end
+  found = .ShadowedSpecialVars~new~run(parser)~items
+  ok = ok & found == expectFindings
+
+  call sysfiledelete file
+
+  if ok then do
+     say 'ok  'label
+     return 0
+  end
+  say 'FAIL 'label': findings='found
+  return 1
+
 ::routine assertDetect
   use strict arg dir, fname, line1, line2, expectInterp, expectDialect, ,
      expectIsNonRexx, expectSource, label
 
   file = dir || fname
+  call stream file, 'c', 'open write replace'
   call lineout file, line1
   if line2 ¬== '' then call lineout file, line2
   call stream file, 'c', 'close'
@@ -295,6 +347,7 @@ exit main(argLine)
   use strict arg dir, fname, line1, line2, expectUnsupported, expectSource, label
 
   file = dir || fname
+  call stream file, 'c', 'open write replace'
   call lineout file, line1
   if line2 ¬== '' then call lineout file, line2
   call stream file, 'c', 'close'
@@ -347,6 +400,29 @@ exit main(argLine)
      return 0
   end
   say 'FAIL 'label': expected 'expected' kinds, got 'got
+  return 1
+
+/* assertFindingCountIn -- as assertFindingCount, for a check whose
+ * findings depend on the dialect it was told (via appliesTo). */
+::routine assertFindingCountIn
+  use strict arg file, check, dialect, expectedCount
+
+  if ¬.File~new(file)~isFile then do
+     say 'FAIL 'file': fixture not found'
+     return 1
+  end
+  check~appliesTo(dialect, .True)
+  diagnostics = check~run(.Rexx.Parser~new(file))
+
+  if diagnostics~items == expectedCount then do
+     say 'ok  'file' in 'dialect' ('expectedCount' finding(s))'
+     return 0
+  end
+
+  say 'FAIL 'file' in 'dialect': expected 'expectedCount' finding(s), got 'diagnostics~items
+  do d over diagnostics
+     say '     'd~format
+  end
   return 1
 
 ::routine assertApplies
