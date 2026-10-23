@@ -31,7 +31,7 @@ exit main(argLine)
   here = filespec('location', .context~package~name)
 
   failures = 0
-  failures = failures + assertFindingCount(here'fixtures/shadowed-vars-bad.rex', .ShadowedSpecialVars~new, 2)
+  failures = failures + assertFindingCount(here'fixtures/shadowed-vars-bad.rex', .ShadowedSpecialVars~new, 15)
   failures = failures + assertFindingCount(here'fixtures/shadowed-vars-good.rex', .ShadowedSpecialVars~new, 0)
   failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-bad.rex', .KeywordAsVariable~new, 2)
   failures = failures + assertFindingCount(here'fixtures/keyword-as-variable-good.rex', .KeywordAsVariable~new, 0)
